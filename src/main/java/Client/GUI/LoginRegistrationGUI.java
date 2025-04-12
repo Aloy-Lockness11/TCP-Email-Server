@@ -2,6 +2,7 @@ package Client.GUI;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 
 public class LoginRegistrationGUI extends JFrame {
     private CardLayout cardLayout;
@@ -15,7 +16,7 @@ public class LoginRegistrationGUI extends JFrame {
         cardLayout = new CardLayout();
         mainPanel = new JPanel(cardLayout);
 
-        // login panel
+        // Add the login panel
         mainPanel.add(createLoginPanel(), "Login");
 
         cardLayout.show(mainPanel, "Login");
@@ -54,6 +55,27 @@ public class LoginRegistrationGUI extends JFrame {
         JPasswordField txtPassword = new JPasswordField(15);
         panel.add(txtPassword, gbc);
 
+        // Login button
+        gbc.gridx = 0;
+        gbc.gridy = 9;
+        gbc.gridwidth = 2;
+        JButton btnLogin = new JButton("Login");
+        panel.add(btnLogin, gbc);
+
+        // Register button
+        gbc.gridy = 12;
+        JButton btnRegister = new JButton("New user? Register Here");
+        panel.add(btnRegister, gbc);
+
+        btnLogin.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+            }
+        });
+
+        btnRegister.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                }
+        });
 
         return panel;
     }
