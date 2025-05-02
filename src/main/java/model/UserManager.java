@@ -9,7 +9,6 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import utils.UserValidator;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,25 +37,14 @@ public class UserManager implements UserManagerInterface {
      */
     public void registerUser(String firstName, String lastName, String email, String password) throws UserAlreadyExistsException {
         if (users.containsKey(email)) {
-            throw new UserNotFoundException(email);// User already exists
+            throw new UserAlreadyExistsException(email);
         }
 
         User user = new User(firstName, lastName, email, password);
-
-        // Validate user object
-        try {
-            UserValidator.validate(user);
-        } catch (ConstraintViolationException e) {
-            StringBuilder msg = new StringBuilder();
-            for (ConstraintViolation<?> violation : e.getConstraintViolations()) {
-                msg.append(violation.getMessage()).append("; ");
-                log.warn("Validation error for : {}", violation.getMessage());
-            }
-            throw new InvalidUserDetailsException(msg.toString());
-        }
+        UserValidator.validate(user); // Now cleaner
 
         users.put(email, user);
-        log.info("User registered successfully: {}", email);
+        log.info("User registered: {}", email);
     }
 
 
@@ -83,5 +71,23 @@ public class UserManager implements UserManagerInterface {
         }
 
         log.info("User logged in successfully: {}", email);
+    }
+
+    /**
+     * Sets the user map
+     * This method is used to load user data into memory
+     * It clears the existing user map and loads the new data
+     *
+     * @param userMap The user map to set
+     */
+    @Override
+    public void setUserMap(ConcurrentHashMap<String, User> userMap) {
+        if (userMap != null) {
+            users.clear();
+            users.putAll(userMap);
+            log.info("User data loaded into memory. Total users: {}", users.size());
+        } else {
+            log.warn("Attempted to load null user data. Skipping.");
+        }
     }
 }
