@@ -4,8 +4,6 @@ import exception.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -91,7 +89,27 @@ public class EmailManager implements EmailManagerInterface {
         log.info("Email marked as viewed: {}", emailId);
         return true;
     }
-    
+
+    /**
+     * Sets the email map
+     * This method is used to load email data into memory
+     * It clears the existing email map and loads the new data.
+     *
+     *
+     * @param emailMap
+     * @return The email map.
+     */
+    @Override
+    public void setEmailMap(ConcurrentHashMap<String, Email> emailMap) {
+        if (emailMap != null) {
+            emails.clear();
+            emails.putAll(emailMap);
+            log.info("Email data loaded into memory. Total emails: {}", emails.size());
+        } else {
+            log.warn("Attempted to load null email data. Skipping.");
+        }
+    }
+
     /**
      * Generates a simple ID for the email.
      * 

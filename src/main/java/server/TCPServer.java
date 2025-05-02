@@ -5,11 +5,13 @@ import model.EmailManager;
 import model.EmailManagerInterface;
 import model.UserManager;
 import model.UserManagerInterface;
+import utils.StorageManager;
 
 import java.net.Socket;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * TCPServer class that implements a simple TCP server.
@@ -33,6 +35,8 @@ public class TCPServer {
      * @param args Command line arguments
      */
     public static void main(String[] args) {
+
+
         Scanner sc = new Scanner(System.in);
 
         // Menu System to handle Running of the server
@@ -54,9 +58,21 @@ public class TCPServer {
                     System.out.println("Exiting...");
                     log.info("Application Closed");
                     break;
+                case "4":
+                    StorageManager.clearUsers();
+                    break;
+                case "5":
+                    StorageManager.clearEmails();
+                    break;
+                case "6":
+                    userManager.setUserMap(new ConcurrentHashMap<>(StorageManager.loadUsers()));
+                    emailManager.setEmailMap(new ConcurrentHashMap<>(StorageManager.loadEmails()));
+                    log.info("Data manually reloaded from storage.");
+                    break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
+
         }
 
     }
@@ -73,6 +89,10 @@ public class TCPServer {
             System.out.println("Server is already running.");
             return;
         }
+
+        userManager.setUserMap(new ConcurrentHashMap<>(StorageManager.loadUsers()));
+        emailManager.setEmailMap(new ConcurrentHashMap<>(StorageManager.loadEmails()));
+        log.info("Data loaded from storage on startup.");
 
         // Create a new thread for the server
         serverRunning = true;
@@ -109,6 +129,9 @@ public class TCPServer {
         System.out.println("1. Start Server");
         System.out.println("2. Stop Server");
         System.out.println("3. Exit");
+        System.out.println("4. Clear User Data");
+        System.out.println("5. Clear Email Data");
+        System.out.println("6. Load All Data");
         System.out.print("Choose an option: ");
 
         // Add logic to handle user input and call appropriate methods

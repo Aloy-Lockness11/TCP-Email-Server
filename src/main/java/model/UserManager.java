@@ -9,7 +9,6 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import utils.UserValidator;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -83,5 +82,23 @@ public class UserManager implements UserManagerInterface {
         }
 
         log.info("User logged in successfully: {}", email);
+    }
+
+    /**
+     * Sets the user map
+     * This method is used to load user data into memory
+     * It clears the existing user map and loads the new data
+     *
+     * @param userMap The user map to set
+     */
+    @Override
+    public void setUserMap(ConcurrentHashMap<String, User> userMap) {
+        if (userMap != null) {
+            users.clear();
+            users.putAll(userMap);
+            log.info("User data loaded into memory. Total users: {}", users.size());
+        } else {
+            log.warn("Attempted to load null user data. Skipping.");
+        }
     }
 }

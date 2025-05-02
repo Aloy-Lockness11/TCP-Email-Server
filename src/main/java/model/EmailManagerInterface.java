@@ -1,6 +1,7 @@
 package model;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface EmailManagerInterface {
 
@@ -38,4 +39,11 @@ public interface EmailManagerInterface {
      * @return A boolean indicating whether the email was marked as viewed successfully or not.
      */
     boolean markEmailAsViewed(String emailId);
+
+    /**
+     * Sets the email map.
+     *
+     * @return The email map.
+     */
+    void setEmailMap(ConcurrentHashMap<String, Email> emailMap);
 }
