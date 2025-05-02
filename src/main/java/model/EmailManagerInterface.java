@@ -42,7 +42,7 @@ public interface EmailManagerInterface {
      * @param emailId The ID of the email
      * @throws EmailNotFoundException if the email is not found
      */
-    boolean markEmailAsViewed(String emailId);
+    void markEmailAsViewed(String emailId) throws EmailNotFoundException;
 
     /**
      * Sets the email map.
@@ -50,5 +50,5 @@ public interface EmailManagerInterface {
      * @return The email map.
      */
     void setEmailMap(ConcurrentHashMap<String, Email> emailMap);
-    void markEmailAsViewed(String emailId) throws EmailNotFoundException;
+
 }

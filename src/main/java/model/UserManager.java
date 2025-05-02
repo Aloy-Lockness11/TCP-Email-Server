@@ -37,25 +37,14 @@ public class UserManager implements UserManagerInterface {
      */
     public void registerUser(String firstName, String lastName, String email, String password) throws UserAlreadyExistsException {
         if (users.containsKey(email)) {
-            throw new UserNotFoundException(email);// User already exists
+            throw new UserAlreadyExistsException(email);
         }
 
         User user = new User(firstName, lastName, email, password);
-
-        // Validate user object
-        try {
-            UserValidator.validate(user);
-        } catch (ConstraintViolationException e) {
-            StringBuilder msg = new StringBuilder();
-            for (ConstraintViolation<?> violation : e.getConstraintViolations()) {
-                msg.append(violation.getMessage()).append("; ");
-                log.warn("Validation error for : {}", violation.getMessage());
-            }
-            throw new InvalidUserDetailsException(msg.toString());
-        }
+        UserValidator.validate(user); // Now cleaner
 
         users.put(email, user);
-        log.info("User registered successfully: {}", email);
+        log.info("User registered: {}", email);
     }
 
 
