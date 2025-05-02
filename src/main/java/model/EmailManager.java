@@ -1,5 +1,6 @@
 package model;
 
+import exception.EmailNotFoundException;
 import exception.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -11,11 +12,13 @@ import java.util.stream.Collectors;
 
 /**
  * EmailManager class to manage email operations.
- * It uses a HashMap to store email data.
+ * It uses a ConcurrentHashMap to store email data for thread safety.
  */
 @Slf4j
 public class EmailManager implements EmailManagerInterface {
-    private final Map<String, Email> emails = new ConcurrentHashMap<>();
+    
+    // ConcurrentHashMap to store email data for thread safety
+    private static final Map<String, Email> emails = new ConcurrentHashMap<>();
 
     /**
      * Sends an email from one user to another.
@@ -55,9 +58,12 @@ public class EmailManager implements EmailManagerInterface {
      * @return A list of emails received by the user
      */
     public List<Email> getReceivedEmails(String userEmail) {
-        return emails.values().stream()
+        List<Email> receivedEmails = emails.values().stream()
                 .filter(email -> email.getRecipient().equals(userEmail))
                 .collect(Collectors.toList());
+        
+        log.info("Retrieved {} received emails for user: {}", receivedEmails.size(), userEmail);
+        return receivedEmails;
     }
     
     /**
@@ -67,27 +73,30 @@ public class EmailManager implements EmailManagerInterface {
      * @return A list of emails sent by the user
      */
     public List<Email> getSentEmails(String userEmail) {
-        return emails.values().stream()
+        List<Email> sentEmails = emails.values().stream()
                 .filter(email -> email.getSender().equals(userEmail))
                 .collect(Collectors.toList());
+        
+        log.info("Retrieved {} sent emails for user: {}", sentEmails.size(), userEmail);
+        return sentEmails;
     }
     
     /**
      * Marks an email as viewed.
      * 
      * @param emailId The ID of the email
-     * @return true if the email was marked as viewed, false if the email was not found
+     * @throws EmailNotFoundException if the email is not found
      */
-    public boolean markEmailAsViewed(String emailId) {
+    public void markEmailAsViewed(String emailId) throws EmailNotFoundException {
         Email email = emails.get(emailId);
         if (email == null) {
             log.error("Email not found: {}", emailId);
-            return false;
+            throw new EmailNotFoundException(emailId);
         }
         
         email.setViewed(true);
+        emails.put(emailId, email);
         log.info("Email marked as viewed: {}", emailId);
-        return true;
     }
 
     /**
