@@ -8,6 +8,11 @@ import utils.TCPUtils;
 
 import java.net.Socket;
 
+
+import utils.Protocols.UserProtocol;
+import utils.Protocols.EmailProtocol;
+import utils.Protocols.CommonProtocol;
+
 /**
  * ClientHandler is responsible for handling client requests in a separate thread.
  * It processes commands such as REGISTER and LOGIN, and interacts with the UserManager.
@@ -52,14 +57,14 @@ public class ClientHandler implements Runnable {
      */
     private String handleRequest(String request) {
         // Split the request string into parts
-        final String SEP = "##";
+        final String SEP = CommonProtocol.SEP;
         String[] parts = request.split(SEP);
-        if (parts.length == 0) return "UNKNOWN";
+        if (parts.length == 0) return EmailProtocol.UNKNOWN_COMMAND;
 
         return switch (parts[0].toUpperCase()) {
-            case "REGISTER" -> handleRegister(parts);
-            case "LOGIN" -> handleLogin(parts);
-            default -> "UNKNOWN_COMMAND";
+            case UserProtocol.REGISTER -> handleRegister(parts);
+            case UserProtocol.LOGIN -> handleLogin(parts);
+            default -> EmailProtocol.UNKNOWN_COMMAND;
         };
     }
 
@@ -72,16 +77,16 @@ public class ClientHandler implements Runnable {
      * @return The response string indicating the result of the registration.
      */
     private String handleRegister(String[] parts) {
-        if (parts.length != 5) return "REGISTER##INVALID_FORMAT";
+        if (parts.length != 5) return UserProtocol.REGISTER + CommonProtocol.SEP + UserProtocol.INVALID_FORMAT;
 
         // Check if the user already exists
         try {
             userManager.registerUser(parts[1], parts[2], parts[3], parts[4]);
-            return "REGISTER##SUCCESS";
+            return UserProtocol.REGISTER + CommonProtocol.SEP + UserProtocol.SUCCESS;
         } catch (UserAlreadyExistsException e) {
-            return "REGISTER##USER_ALREADY_EXISTS";
-        }catch (InvalidUserDetailsException e) {
-            return "REGISTER##INVALID_DETAILS##"+e.getMessage();
+            return UserProtocol.REGISTER + CommonProtocol.SEP + UserProtocol.USER_ALREADY_EXISTS;
+        } catch (InvalidUserDetailsException e) {
+            return UserProtocol.REGISTER + CommonProtocol.SEP + UserProtocol.INVALID_DETAILS + CommonProtocol.SEP + e.getMessage();
         }
     }
 
@@ -94,16 +99,15 @@ public class ClientHandler implements Runnable {
      * @return The response string indicating the result of the login attempt.
      */
     private String handleLogin(String[] parts) {
-        if (parts.length != 3) return "LOGIN##INVALID_FORMAT";
+        if (parts.length != 3) return UserProtocol.LOGIN + CommonProtocol.SEP + UserProtocol.INVALID_FORMAT;
 
-        // Check if the user exists and the credentials are valid
         try {
             userManager.loginUser(parts[1], parts[2]);
-            return "LOGIN##SUCCESS";
+            return UserProtocol.LOGIN + CommonProtocol.SEP + UserProtocol.SUCCESS;
         } catch (UserNotFoundException e) {
-            return "LOGIN##NO_USER";
+            return UserProtocol.LOGIN + CommonProtocol.SEP + UserProtocol.NO_USER;
         } catch (InvalidUserCredentialsException e) {
-            return "LOGIN##FAIL";
+            return UserProtocol.LOGIN + CommonProtocol.SEP + UserProtocol.INVALID_CREDENTIALS;
         }
     }
 }
