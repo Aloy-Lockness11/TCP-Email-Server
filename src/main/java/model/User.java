@@ -45,5 +45,11 @@ public class User {
     private List<Email> emailsSent;
     private List<Email> emailsReceived;
 
-    // Additional fields and methods can be added here as needed
+    public User(String firstName, String lastName, String email, String password) {
+        this.id = UUID.randomUUID();
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.password = password;
+    }
 }
