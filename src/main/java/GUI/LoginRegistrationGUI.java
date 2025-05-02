@@ -1,10 +1,13 @@
 package GUI;
 
 import client.ClientConnection;
+import exception.InvalidUserCredentialsException;
+import exception.UserAlreadyExistsException;
+import exception.UserNotFoundException;
+import model.UserManager;
 
 import javax.swing.*;
 import java.awt.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -14,7 +17,7 @@ public class LoginRegistrationGUI extends JFrame {
 
     public LoginRegistrationGUI() {
         setTitle("Email System - Login and Registration");
-        setSize(400, 300);
+        setSize(400, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         cardLayout = new CardLayout();
@@ -30,7 +33,6 @@ public class LoginRegistrationGUI extends JFrame {
     }
 
     private JPanel createLoginPanel() {
-        // ... existing code ...
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
@@ -44,28 +46,26 @@ public class LoginRegistrationGUI extends JFrame {
         gbc.gridwidth = 2;
         panel.add(lblTitle, gbc);
 
-        // Username label and field
+        // Email label and field
         gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridy = 3;
-        panel.add(new JLabel("Username:"), gbc);
+        panel.add(new JLabel("Email:"), gbc);
         gbc.gridx = 1;
-        JTextField txtUsername = new JTextField(15);
-        panel.add(txtUsername, gbc);
+        JTextField txtEmail = new JTextField(15);
+        panel.add(txtEmail, gbc);
 
         // Password label and field
         gbc.gridx = 0;
         gbc.gridy = 6;
         panel.add(new JLabel("Password:"), gbc);
         
-        // Create a panel to hold password field and show/hide button
+        // Create a panel for password field and show/hide button
         JPanel passwordPanel = new JPanel(new BorderLayout(5, 0));
-        passwordPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-        
         JPasswordField txtPassword = new JPasswordField(15);
         passwordPanel.add(txtPassword, BorderLayout.CENTER);
         
-        // Add show/hide password button
+        // Add show/hide button
         JToggleButton btnShowHide = new JToggleButton("Show");
         btnShowHide.setPreferredSize(new Dimension(60, txtPassword.getPreferredSize().height));
         btnShowHide.addActionListener(e -> {
@@ -73,7 +73,7 @@ public class LoginRegistrationGUI extends JFrame {
                 txtPassword.setEchoChar((char) 0); // Show password
                 btnShowHide.setText("Hide");
             } else {
-                txtPassword.setEchoChar('•'); // Hide password with bullet character
+                txtPassword.setEchoChar('•'); // Hide password
                 btnShowHide.setText("Show");
             }
         });
@@ -98,24 +98,24 @@ public class LoginRegistrationGUI extends JFrame {
 
         // Login action
         btnLogin.addActionListener(e -> {
-            String username = txtUsername.getText();
+            String email = txtEmail.getText();
             String password = String.valueOf(txtPassword.getPassword());
 
-            if (username.isEmpty() || password.isEmpty()) {
+            if (email.isEmpty() || password.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "Please fill in all fields.");
                 return;
             }
 
             try {
-                ClientConnection connection = new ClientConnection("localhost", 12345); // Change port if needed
-                connection.send("LOGIN " + username + " " + password);
+                ClientConnection connection = new ClientConnection("localhost", 12345);
+                connection.send("LOGIN##" + email + "##" + password);
                 String response = connection.receive();
                 connection.close();
 
-                if ("OK".equalsIgnoreCase(response)) {
+                if (response.equals("LOGIN##SUCCESS")) {
                     JOptionPane.showMessageDialog(null, "Login successful!");
                     dispose(); // Close login window
-                    new DashBoard(username); // Open dashboard window
+                    new DashBoard(email); // Open dashboard window
                 } else {
                     JOptionPane.showMessageDialog(null, "Login failed: " + response);
                 }
@@ -147,28 +147,42 @@ public class LoginRegistrationGUI extends JFrame {
         gbc.gridwidth = 2;
         panel.add(lblTitle, gbc);
 
-        // Username label and field
+        // First Name label and field
         gbc.gridwidth = 1;
         gbc.gridx = 0;
-        gbc.gridy = 3;
-        panel.add(new JLabel("Username:"), gbc);
+        gbc.gridy = 1;
+        panel.add(new JLabel("First Name:"), gbc);
         gbc.gridx = 1;
-        JTextField txtUsername = new JTextField(15);
-        panel.add(txtUsername, gbc);
+        JTextField txtFirstName = new JTextField(15);
+        panel.add(txtFirstName, gbc);
+
+        // Last Name label and field
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        panel.add(new JLabel("Last Name:"), gbc);
+        gbc.gridx = 1;
+        JTextField txtLastName = new JTextField(15);
+        panel.add(txtLastName, gbc);
+
+        // Email label and field
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        panel.add(new JLabel("Email:"), gbc);
+        gbc.gridx = 1;
+        JTextField txtEmail = new JTextField(15);
+        panel.add(txtEmail, gbc);
 
         // Password label and field
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 4;
         panel.add(new JLabel("Password:"), gbc);
         
-        // Create a panel to hold password field and show/hide button
+        // Create a panel for password field and show/hide button
         JPanel passwordPanel = new JPanel(new BorderLayout(5, 0));
-        passwordPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-        
         JPasswordField txtPassword = new JPasswordField(15);
         passwordPanel.add(txtPassword, BorderLayout.CENTER);
         
-        // Add show/hide password button
+        // Add show/hide button
         JToggleButton btnShowHidePass = new JToggleButton("Show");
         btnShowHidePass.setPreferredSize(new Dimension(60, txtPassword.getPreferredSize().height));
         btnShowHidePass.addActionListener(e -> {
@@ -176,7 +190,7 @@ public class LoginRegistrationGUI extends JFrame {
                 txtPassword.setEchoChar((char) 0); // Show password
                 btnShowHidePass.setText("Hide");
             } else {
-                txtPassword.setEchoChar('•'); // Hide password with bullet character
+                txtPassword.setEchoChar('•'); // Hide password
                 btnShowHidePass.setText("Show");
             }
         });
@@ -187,17 +201,15 @@ public class LoginRegistrationGUI extends JFrame {
 
         // Confirm Password label and field
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 5;
         panel.add(new JLabel("Confirm Password:"), gbc);
         
-        // Create a panel to hold confirm password field and show/hide button
+        // Create a panel for confirm password field and show/hide button
         JPanel confirmPasswordPanel = new JPanel(new BorderLayout(5, 0));
-        confirmPasswordPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-        
         JPasswordField txtConfirmPassword = new JPasswordField(15);
         confirmPasswordPanel.add(txtConfirmPassword, BorderLayout.CENTER);
         
-        // Add show/hide confirm password button
+        // Add show/hide button
         JToggleButton btnShowHideConfirm = new JToggleButton("Show");
         btnShowHideConfirm.setPreferredSize(new Dimension(60, txtConfirmPassword.getPreferredSize().height));
         btnShowHideConfirm.addActionListener(e -> {
@@ -205,7 +217,7 @@ public class LoginRegistrationGUI extends JFrame {
                 txtConfirmPassword.setEchoChar((char) 0); // Show password
                 btnShowHideConfirm.setText("Hide");
             } else {
-                txtConfirmPassword.setEchoChar('•'); // Hide password with bullet character
+                txtConfirmPassword.setEchoChar('•'); // Hide password
                 btnShowHideConfirm.setText("Show");
             }
         });
@@ -216,13 +228,12 @@ public class LoginRegistrationGUI extends JFrame {
         
         // Add password match status label
         JLabel lblPasswordMatch = new JLabel("", JLabel.CENTER);
-        lblPasswordMatch.setForeground(Color.RED);
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         panel.add(lblPasswordMatch, gbc);
         
-        // Add document listeners to both password fields to check for matches
+        // Add document listeners to check password match
         DocumentListener passwordListener = new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -249,7 +260,7 @@ public class LoginRegistrationGUI extends JFrame {
                     lblPasswordMatch.setText("Passwords match");
                     lblPasswordMatch.setForeground(new Color(0, 150, 0)); // Green color
                 } else {
-                    lblPasswordMatch.setText("Passwords don't match");
+                    lblPasswordMatch.setText("Passwords do not match");
                     lblPasswordMatch.setForeground(Color.RED);
                 }
             }
@@ -260,7 +271,7 @@ public class LoginRegistrationGUI extends JFrame {
 
         // Register Button
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 7;
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.fill = GridBagConstraints.NONE;
@@ -268,17 +279,20 @@ public class LoginRegistrationGUI extends JFrame {
         panel.add(btnRegister, gbc);
 
         // Back to Login Button
-        gbc.gridy = 12;
+        gbc.gridy = 8;
         JButton btnBackToLogin = new JButton("Back to Login");
         panel.add(btnBackToLogin, gbc);
 
         // Register action
         btnRegister.addActionListener(e -> {
-            String username = txtUsername.getText();
+            String firstName = txtFirstName.getText();
+            String lastName = txtLastName.getText();
+            String email = txtEmail.getText();
             String password = String.valueOf(txtPassword.getPassword());
             String confirmPassword = String.valueOf(txtConfirmPassword.getPassword());
 
-            if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+            if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty() || 
+                password.isEmpty() || confirmPassword.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "Please fill in all fields.");
                 return;
             }
@@ -289,12 +303,12 @@ public class LoginRegistrationGUI extends JFrame {
             }
 
             try {
-                ClientConnection connection = new ClientConnection("localhost", 12345); // Match your server port
-                connection.send("REGISTER " + username + " " + password);
+                ClientConnection connection = new ClientConnection("localhost", 12345);
+                connection.send("REGISTER##" + firstName + "##" + lastName + "##" + email + "##" + password);
                 String response = connection.receive();
                 connection.close();
 
-                if ("OK".equalsIgnoreCase(response)) {
+                if (response.equals("REGISTER##SUCCESS")) {
                     JOptionPane.showMessageDialog(null, "Registration successful!");
                     cardLayout.show(mainPanel, "Login"); // Go back to login after successful registration
                 } else {
