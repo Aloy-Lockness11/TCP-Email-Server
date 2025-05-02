@@ -2,7 +2,8 @@ package server;
 
 import exception.*;
 import lombok.AllArgsConstructor;
-import model.UserManager;
+import model.EmailManagerInterface;
+import model.UserManagerInterface;
 import utils.TCPUtils;
 
 import java.net.Socket;
@@ -14,7 +15,8 @@ import java.net.Socket;
 @AllArgsConstructor
 public class ClientHandler implements Runnable {
     private final Socket socket;
-    private final UserManager userManager;
+    private final UserManagerInterface userManager;
+    private final EmailManagerInterface emailManager;
 
     /**
      * The run method is executed when the thread is started.
@@ -78,7 +80,7 @@ public class ClientHandler implements Runnable {
             return "REGISTER##SUCCESS";
         } catch (UserAlreadyExistsException e) {
             return "REGISTER##USER_ALREADY_EXISTS";
-        }catch (InvalidUserCredentialsException e) {
+        }catch (InvalidUserDetailsException e) {
             return "REGISTER##INVALID_DETAILS##"+e.getMessage();
         }
     }

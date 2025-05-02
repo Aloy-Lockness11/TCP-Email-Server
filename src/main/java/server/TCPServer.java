@@ -1,7 +1,10 @@
 package server;
 
 import lombok.extern.slf4j.Slf4j;
+import model.EmailManager;
+import model.EmailManagerInterface;
 import model.UserManager;
+import model.UserManagerInterface;
 
 import java.net.Socket;
 import java.io.IOException;
@@ -19,7 +22,9 @@ public class TCPServer {
     private static boolean programRunning = true;
     private static Thread serverThread;
 
-    private static final UserManager userManager = new UserManager();
+
+    private static final UserManagerInterface userManager= new UserManager();
+    private static final EmailManagerInterface emailManager= new EmailManager();
 
     /**
      * Main method to start the TCP server.
@@ -83,7 +88,7 @@ public class TCPServer {
                     log.info("Client connected from {}", clientSocket.getInetAddress());
 
                     // Create a new thread to handle the client connection
-                    new Thread(new ClientHandler(clientSocket,userManager)).start();
+                    new Thread(new ClientHandler(clientSocket,userManager,emailManager)).start();
                 }
 
             } catch (IOException e) {

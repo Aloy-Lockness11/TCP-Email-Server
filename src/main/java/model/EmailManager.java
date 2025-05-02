@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -15,8 +16,8 @@ import java.util.stream.Collectors;
  * It uses a HashMap to store email data.
  */
 @Slf4j
-public class EmailManager {
-    private static final Map<String, Email> emails = new HashMap<>();
+public class EmailManager implements EmailManagerInterface {
+    private final Map<String, Email> emails = new ConcurrentHashMap<>();
 
     /**
      * Sends an email from one user to another.
@@ -28,7 +29,7 @@ public class EmailManager {
      * @return The ID of the sent email
      * @throws UserNotFoundException if the sender or recipient does not exist
      */
-    public static String sendEmail(String sender, String recipient, String subject, String content) 
+    public String sendEmail(String sender, String recipient, String subject, String content)
             throws UserNotFoundException {
         // Create a new email
         String emailId = generateEmailId();
@@ -55,7 +56,7 @@ public class EmailManager {
      * @param userEmail The email address of the user
      * @return A list of emails received by the user
      */
-    public static List<Email> getReceivedEmails(String userEmail) {
+    public List<Email> getReceivedEmails(String userEmail) {
         return emails.values().stream()
                 .filter(email -> email.getRecipient().equals(userEmail))
                 .collect(Collectors.toList());
@@ -67,7 +68,7 @@ public class EmailManager {
      * @param userEmail The email address of the user
      * @return A list of emails sent by the user
      */
-    public static List<Email> getSentEmails(String userEmail) {
+    public List<Email> getSentEmails(String userEmail) {
         return emails.values().stream()
                 .filter(email -> email.getSender().equals(userEmail))
                 .collect(Collectors.toList());
@@ -79,7 +80,7 @@ public class EmailManager {
      * @param emailId The ID of the email
      * @return true if the email was marked as viewed, false if the email was not found
      */
-    public static boolean markEmailAsViewed(String emailId) {
+    public boolean markEmailAsViewed(String emailId) {
         Email email = emails.get(emailId);
         if (email == null) {
             log.error("Email not found: {}", emailId);
@@ -96,7 +97,7 @@ public class EmailManager {
      * 
      * @return A unique ID for the email
      */
-    private static String generateEmailId() {
+    private String generateEmailId() {
         return "email-" + System.currentTimeMillis() + "-" + emails.size();
     }
 }
