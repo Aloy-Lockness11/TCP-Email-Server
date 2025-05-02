@@ -84,6 +84,8 @@ public class ClientHandler implements Runnable {
             return "REGISTER##SUCCESS";
         } catch (UserAlreadyExistsException e) {
             return "REGISTER##USER_ALREADY_EXISTS";
+        }catch (InvalidUserCredentialsException e) {
+            return "REGISTER##INVALID_DETAILS##"+e.getMessage();
         }
     }
 

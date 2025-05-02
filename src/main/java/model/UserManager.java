@@ -1,9 +1,13 @@
 package model;
 
 import exception.InvalidUserCredentialsException;
+import exception.InvalidUserDetailsException;
 import exception.UserAlreadyExistsException;
 import exception.UserNotFoundException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import utils.UserValidator;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +26,19 @@ public class UserManager {
         }
 
         User user = new User(firstName, lastName, email, password);
+
+        // Validate user object
+        try {
+            UserValidator.validate(user);
+        } catch (ConstraintViolationException e) {
+            StringBuilder msg = new StringBuilder();
+            for (ConstraintViolation<?> violation : e.getConstraintViolations()) {
+                msg.append(violation.getMessage()).append("; ");
+                log.warn("Validation error for : {}", violation.getMessage());
+            }
+            throw new InvalidUserDetailsException(msg.toString());
+        }
+
         users.put(email, user);
         log.info("User registered successfully: {}", email);
     }
@@ -36,7 +53,7 @@ public class UserManager {
         }
 
         if(!user.getPassword().equals(password)) {
-            log.error("Invalid password for user: {}", email);
+            log.warn("Invalid password for user: {}", email);
             throw new InvalidUserCredentialsException(email);
         }
 
