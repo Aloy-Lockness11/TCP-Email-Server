@@ -2,7 +2,9 @@ package model;
 
 import exception.EmailNotFoundException;
 import exception.UserNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import utils.EmailValidator;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,7 +18,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class EmailManager implements EmailManagerInterface {
-    
+
     // ConcurrentHashMap to store email data for thread safety
     private static final Map<String, Email> emails = new ConcurrentHashMap<>();
 
@@ -32,7 +34,6 @@ public class EmailManager implements EmailManagerInterface {
      */
     public String sendEmail(String sender, String recipient, String subject, String content)
             throws UserNotFoundException {
-        // Create a new email
         String emailId = generateEmailId();
         Email email = Email.builder()
                 .id(emailId)
@@ -43,10 +44,10 @@ public class EmailManager implements EmailManagerInterface {
                 .timestamp(LocalDateTime.now())
                 .viewed(false)
                 .build();
-        
-        // Store the email
+
+        EmailValidator.validate(email);
+
         emails.put(emailId, email);
-        
         log.info("Email sent successfully from {} to {}: {}", sender, recipient, subject);
         return emailId;
     }
@@ -61,7 +62,7 @@ public class EmailManager implements EmailManagerInterface {
         List<Email> receivedEmails = emails.values().stream()
                 .filter(email -> email.getRecipient().equals(userEmail))
                 .collect(Collectors.toList());
-        
+
         log.info("Retrieved {} received emails for user: {}", receivedEmails.size(), userEmail);
         return receivedEmails;
     }
@@ -76,7 +77,7 @@ public class EmailManager implements EmailManagerInterface {
         List<Email> sentEmails = emails.values().stream()
                 .filter(email -> email.getSender().equals(userEmail))
                 .collect(Collectors.toList());
-        
+
         log.info("Retrieved {} sent emails for user: {}", sentEmails.size(), userEmail);
         return sentEmails;
     }
@@ -98,7 +99,27 @@ public class EmailManager implements EmailManagerInterface {
         emails.put(emailId, email);
         log.info("Email marked as viewed: {}", emailId);
     }
-    
+
+    /**
+     * Sets the email map
+     * This method is used to load email data into memory
+     * It clears the existing email map and loads the new data.
+     *
+     *
+     * @param emailMap
+     * @return The email map.
+     */
+    @Override
+    public void setEmailMap(ConcurrentHashMap<String, Email> emailMap) {
+        if (emailMap != null) {
+            emails.clear();
+            emails.putAll(emailMap);
+            log.info("Email data loaded into memory. Total emails: {}", emails.size());
+        } else {
+            log.warn("Attempted to load null email data. Skipping.");
+        }
+    }
+
     /**
      * Generates a simple ID for the email.
      * 
