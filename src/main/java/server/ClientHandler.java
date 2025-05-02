@@ -1,7 +1,9 @@
 package server;
 
 import exception.*;
-import model.UserManager;
+import lombok.AllArgsConstructor;
+import model.EmailManagerInterface;
+import model.UserManagerInterface;
 import utils.TCPUtils;
 
 import java.net.Socket;
@@ -10,17 +12,11 @@ import java.net.Socket;
  * ClientHandler is responsible for handling client requests in a separate thread.
  * It processes commands such as REGISTER and LOGIN, and interacts with the UserManager.
  */
+@AllArgsConstructor
 public class ClientHandler implements Runnable {
     private final Socket socket;
-
-    /**
-     * Constructor to initialize the ClientHandler with a socket.
-     *
-     * @param socket The socket for the client connection.
-     */
-    public ClientHandler(Socket socket) {
-        this.socket = socket;
-    }
+    private final UserManagerInterface userManager;
+    private final EmailManagerInterface emailManager;
 
     /**
      * The run method is executed when the thread is started.
@@ -80,11 +76,11 @@ public class ClientHandler implements Runnable {
 
         // Check if the user already exists
         try {
-            UserManager.registerUser(parts[1], parts[2], parts[3], parts[4]);
+            userManager.registerUser(parts[1], parts[2], parts[3], parts[4]);
             return "REGISTER##SUCCESS";
         } catch (UserAlreadyExistsException e) {
             return "REGISTER##USER_ALREADY_EXISTS";
-        }catch (InvalidUserCredentialsException e) {
+        }catch (InvalidUserDetailsException e) {
             return "REGISTER##INVALID_DETAILS##"+e.getMessage();
         }
     }
@@ -102,7 +98,7 @@ public class ClientHandler implements Runnable {
 
         // Check if the user exists and the credentials are valid
         try {
-            UserManager.loginUser(parts[1], parts[2]);
+            userManager.loginUser(parts[1], parts[2]);
             return "LOGIN##SUCCESS";
         } catch (UserNotFoundException e) {
             return "LOGIN##NO_USER";

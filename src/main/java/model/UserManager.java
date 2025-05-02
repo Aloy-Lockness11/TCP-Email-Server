@@ -11,14 +11,17 @@ import utils.UserValidator;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * UserManager class to manage user registration and login.
  * It uses a HashMap to store user data.
  */
 @Slf4j
-public class UserManager {
-    private static final Map<String, User> users = new HashMap<>();
+public class UserManager implements UserManagerInterface {
+
+    // HashMap to store user data uses ConcurrentHashMap for thread safety
+    private static final Map<String, User> users = new ConcurrentHashMap<>();;
 
     /**
      * Registers a new user.
@@ -33,7 +36,7 @@ public class UserManager {
      * @throws UserAlreadyExistsException if the user already exists
      * @throws InvalidUserDetailsException if the user details are invalid
      */
-    public static void registerUser(String firstName, String lastName, String email, String password) throws UserAlreadyExistsException {
+    public void registerUser(String firstName, String lastName, String email, String password) throws UserAlreadyExistsException {
         if (users.containsKey(email)) {
             throw new UserNotFoundException(email);// User already exists
         }
@@ -65,7 +68,7 @@ public class UserManager {
      * @throws InvalidUserCredentialsException if the password is invalid
      * @throws UserNotFoundException if the user is not found
      */
-    public static void loginUser(String email, String password) throws InvalidUserCredentialsException, UserNotFoundException {
+    public void loginUser(String email, String password) throws InvalidUserCredentialsException, UserNotFoundException {
 
         User user = users.get(email);
 
