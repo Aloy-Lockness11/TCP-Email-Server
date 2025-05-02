@@ -20,6 +20,19 @@ import java.util.Map;
 public class UserManager {
     private static final Map<String, User> users = new HashMap<>();
 
+    /**
+     * Registers a new user.
+     * if the user already exists, it throws UserAlreadyExistsException.
+     * If the user details are invalid, it throws InvalidUserDetailsException.
+     * The details being validated are validated using the UserValidator class.
+     *
+     * @param firstName First name of the user
+     * @param lastName  Last name of the user
+     * @param email     Email of the user
+     * @param password  Password of the user
+     * @throws UserAlreadyExistsException if the user already exists
+     * @throws InvalidUserDetailsException if the user details are invalid
+     */
     public static void registerUser(String firstName, String lastName, String email, String password) throws UserAlreadyExistsException {
         if (users.containsKey(email)) {
             throw new UserNotFoundException(email);// User already exists
@@ -43,6 +56,15 @@ public class UserManager {
         log.info("User registered successfully: {}", email);
     }
 
+
+    /**
+     * Logs in a user.
+     *
+     * @param email    Email of the user
+     * @param password Password of the user
+     * @throws InvalidUserCredentialsException if the password is invalid
+     * @throws UserNotFoundException if the user is not found
+     */
     public static void loginUser(String email, String password) throws InvalidUserCredentialsException, UserNotFoundException {
 
         User user = users.get(email);
