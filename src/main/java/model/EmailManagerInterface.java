@@ -1,41 +1,45 @@
 package model;
 
+import exception.EmailNotFoundException;
+import exception.UserNotFoundException;
+
 import java.util.List;
 
 public interface EmailManagerInterface {
-
     /**
-     * Sends an email from the sender to the recipient with the specified subject and content.
-     *
-     * @param sender    The email address of the sender.
-     * @param recipient The email address of the recipient.
-     * @param subject   The subject of the email.
-     * @param content   The content of the email.
-     * @return A confirmation message indicating whether the email was sent successfully or not.
+     * Sends an email from one user to another.
+     * 
+     * @param sender The email address of the sender
+     * @param recipient The email address of the recipient
+     * @param subject The subject of the email
+     * @param content The content of the email
+     * @return The ID of the sent email
+     * @throws UserNotFoundException if the sender or recipient does not exist
      */
-    String sendEmail(String sender, String recipient, String subject, String content);
-
+    String sendEmail(String sender, String recipient, String subject, String content)
+            throws UserNotFoundException;
+    
     /**
-     * Retrieves all emails received by the specified user.
-     *
-     * @param userEmail The email address of the user.
-     * @return A list of emails received by the user.
+     * Retrieves all emails received by a user.
+     * 
+     * @param userEmail The email address of the user
+     * @return A list of emails received by the user
      */
     List<Email> getReceivedEmails(String userEmail);
-
+    
     /**
-     * Retrieves all emails sent by the specified user.
-     *
-     * @param userEmail The email address of the user.
-     * @return A list of emails sent by the user.
+     * Retrieves all emails sent by a user.
+     * 
+     * @param userEmail The email address of the user
+     * @return A list of emails sent by the user
      */
     List<Email> getSentEmails(String userEmail);
-
+    
     /**
-     * Marks the specified email as viewed.
-     *
-     * @param emailId The ID of the email to mark as viewed.
-     * @return A boolean indicating whether the email was marked as viewed successfully or not.
+     * Marks an email as viewed.
+     * 
+     * @param emailId The ID of the email
+     * @throws EmailNotFoundException if the email is not found
      */
-    boolean markEmailAsViewed(String emailId);
+    void markEmailAsViewed(String emailId) throws EmailNotFoundException;
 }
