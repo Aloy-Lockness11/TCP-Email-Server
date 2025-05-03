@@ -66,6 +66,8 @@ public class ClientHandler implements Runnable {
         return switch (parts[0].toUpperCase()) {
             case UserProtocol.REGISTER -> handleRegister(parts);
             case UserProtocol.LOGIN -> handleLogin(parts);
+            case EmailProtocol.SEND_EMAIL -> handleSendEmail(parts);
+            case EmailProtocol.GET_EMAILS -> handleGetEmails(parts);
             default -> EmailProtocol.UNKNOWN_COMMAND;
         };
     }
