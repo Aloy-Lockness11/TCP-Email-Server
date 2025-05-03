@@ -8,10 +8,13 @@ public class EmailProtocol {
     public static final String READ = "READ";
 
     // RESPONSE CODES
-    public static final String EMAIL_SENT = "EMAIL_SENT";
-    public static final String EMAIL_NOT_FOUND = "EMAIL_NOT_FOUND";
-    public static final String INBOX_EMPTY = "INBOX_EMPTY";
-    public static final String SENT_EMPTY = "SENT_EMPTY";
+    public static final String SEND_EMAIL = "SENDEMAIL";
+    public static final String GET_EMAILS = "GETEMAILS";
+    public static final String SUCCESS = "SUCCESS";
+    public static final String FAILURE = "FAILURE";
+    public static final String NO_EMAILS = "NO_EMAILS";
+    public static final String RECIPIENT_NOT_FOUND = "RECIPIENT_NOT_FOUND";
+    public static final String INVALID_DETAILS = "INVALID_DETAILS";
 
     // WRONG REQUEST FORMAT CODES
     public static final String INVALID_FORMAT = "INVALID_FORMAT";
