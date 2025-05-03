@@ -2,11 +2,13 @@ package server;
 
 import exception.*;
 import lombok.AllArgsConstructor;
+import model.Email;
 import model.EmailManagerInterface;
 import model.UserManagerInterface;
 import utils.TCPUtils;
 
 import java.net.Socket;
+import java.util.List;
 
 
 import utils.Protocols.UserProtocol;
@@ -110,4 +112,76 @@ public class ClientHandler implements Runnable {
             return UserProtocol.LOGIN + CommonProtocol.SEP + UserProtocol.INVALID_CREDENTIALS;
         }
     }
+
+    /**
+     * Handles the SEND_EMAIL command.
+     * It sends an email from one user to another.
+     *
+     * @param parts The parts of the request string.
+     * @return The response string indicating the result of the email sending.
+     */
+    private String handleSendEmail(String[] parts) {
+        // Format should be: SENDEMAIL##sender##recipient##subject##content
+        if (parts.length != 5) return EmailProtocol.SEND_EMAIL + CommonProtocol.SEP + EmailProtocol.INVALID_FORMAT;
+
+        String sender = parts[1];
+        String recipient = parts[2];
+        String subject = parts[3];
+        String content = parts[4];
+
+        try {
+            String emailId = emailManager.sendEmail(sender, recipient, subject, content);
+            return EmailProtocol.SEND_EMAIL + CommonProtocol.SEP + EmailProtocol.SUCCESS + CommonProtocol.SEP + emailId;
+        } catch (UserNotFoundException e) {
+            return EmailProtocol.SEND_EMAIL + CommonProtocol.SEP + EmailProtocol.RECIPIENT_NOT_FOUND;
+        } catch (InvalidEmailDetailsException e) {
+            return EmailProtocol.SEND_EMAIL + CommonProtocol.SEP + EmailProtocol.INVALID_DETAILS + CommonProtocol.SEP + e.getMessage();
+        } catch (Exception e) {
+            return EmailProtocol.SEND_EMAIL + CommonProtocol.SEP + EmailProtocol.FAILURE + CommonProtocol.SEP + e.getMessage();
+        }
+    }
+
+    /**
+     *
+     * Handles the GET_EMAILS command.
+     * It retrieves all emails for a user.
+     *
+     * @param parts The parts of the request string.
+     * @return The response string containing the emails.
+     */
+    private String handleGetEmails(String[] parts) {
+        // Format should be: GETEMAILS##userEmail
+        if (parts.length != 2) return EmailProtocol.GET_EMAILS + CommonProtocol.SEP + EmailProtocol.INVALID_FORMAT;
+
+        String userEmail = parts[1];
+
+        try {
+            List<Email> emails = emailManager.getReceivedEmails(userEmail);
+            StringBuilder response = new StringBuilder(EmailProtocol.GET_EMAILS + CommonProtocol.SEP + EmailProtocol.SUCCESS);
+
+            if (emails.isEmpty()) {
+                response.append(CommonProtocol.SEP).append(EmailProtocol.NO_EMAILS);
+            } else {
+                for (Email email : emails) {
+                    response.append(CommonProtocol.SEP)
+                            .append(email.getId())
+                            .append(CommonProtocol.SEP)
+                            .append(email.getSender())
+                            .append(CommonProtocol.SEP)
+                            .append(email.getSubject())
+                            .append(CommonProtocol.SEP)
+                            .append(email.getContent())
+                            .append(CommonProtocol.SEP)
+                            .append(email.getTimestamp());
+                }
+            }
+
+            return response.toString();
+        } catch (UserNotFoundException e) {
+            return EmailProtocol.GET_EMAILS + CommonProtocol.SEP + UserProtocol.NO_USER;
+        } catch (Exception e) {
+            return EmailProtocol.GET_EMAILS + CommonProtocol.SEP + EmailProtocol.FAILURE + CommonProtocol.SEP + e.getMessage();
+        }
+    }
+
 }
