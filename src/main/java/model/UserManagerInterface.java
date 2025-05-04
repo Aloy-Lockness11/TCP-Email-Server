@@ -3,6 +3,7 @@ package model;
 import exception.InvalidUserCredentialsException;
 import exception.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,6 +34,14 @@ public interface UserManagerInterface {
             throws InvalidUserCredentialsException, UserNotFoundException;
 
     /**
+     * Gets all logged-in users.
+     *
+     */
+
+    List<User> getLoggedInUsers();
+
+
+    /**
      * Sets the user map.
      *
      * @param userMap the user map to set
@@ -45,4 +54,13 @@ public interface UserManagerInterface {
      * @return the user map
      */
     Map<String, User> getUserMap();
+
+
+    /**
+     * Sets the logged-in status of a user.
+     *
+     * @param email the email of the user
+     * @param status the logged-in status to set
+     */
+    void setLoggedIn(String email, boolean status);
 }

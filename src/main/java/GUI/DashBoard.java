@@ -4,6 +4,7 @@ import client.ClientConnection;
 import exception.SecureConnectionException;
 import utils.protocols.CommonProtocol;
 import utils.protocols.EmailProtocol;
+import utils.protocols.UserProtocol;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,6 +36,7 @@ public class DashBoard extends JFrame {
     private JLabel tickLabel;
     private JButton replyButton;
     private EmailDetails currentEmailDetails;
+    private ClientConnection connection;
 
     /**
      * Holds metadata for an email displayed in the list.
@@ -62,12 +64,13 @@ public class DashBoard extends JFrame {
      * Sets up sidebar, search, email list, preview, and compose panel.
      * @param username the user's email address
      */
-    public DashBoard(String username) {
+    public DashBoard(String username,ClientConnection connection) {
         this.username = username;
         setTitle("Email Dashboard - " + username);
         setSize(1000, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        this.connection = connection;
 
         // Main layout: sidebar + main area
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -138,7 +141,15 @@ public class DashBoard extends JFrame {
         btnLogout.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnLogout.setBorder(BorderFactory.createEmptyBorder(8, 24, 8, 24));
         btnLogout.addActionListener(e -> {
-            dispose();
+            try {
+                this.connection.send(UserProtocol.LOGOUT);
+                String response = this.connection.receive();
+                System.out.println("Logout response: " + response);
+                this.connection.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            dispose(); // close UI
             new LoginRegistrationGUI();
         });
         sidebar.add(btnLogout);

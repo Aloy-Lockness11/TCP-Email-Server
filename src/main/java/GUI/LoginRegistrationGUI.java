@@ -240,7 +240,7 @@ public class LoginRegistrationGUI extends JFrame {
                     JOptionPane.showMessageDialog(this, "Login successful!");
                     dispose(); // Close login window
                     // Pass the validated email (username) to the dashboard
-                    new DashBoard(email); // Open dashboard window
+                    new DashBoard(email,connection); // Open dashboard window
                 } else {
                     // Provide more specific feedback if possible based on server response
                     JOptionPane.showMessageDialog(this, "Login failed: " + response, "Login Error", JOptionPane.ERROR_MESSAGE);
