@@ -5,6 +5,8 @@ import model.User;
 import utils.validators.UserValidator;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import utils.protocols.UserProtocol;
+import utils.protocols.CommonProtocol;
 
 import javax.swing.*;
 import java.awt.*;
@@ -229,7 +231,7 @@ public class LoginRegistrationGUI extends JFrame {
 
             try {
                 ClientConnection connection = new ClientConnection("localhost", 12345); // Use CommonProtocol constants ideally
-                connection.send("LOGIN##" + email + "##" + password); 
+                connection.send(UserProtocol.LOGIN + CommonProtocol.SEP + email + CommonProtocol.SEP + password); 
                 String response = connection.receive();
                 connection.close();
 
@@ -407,7 +409,7 @@ public class LoginRegistrationGUI extends JFrame {
 
                 // If validation passes, proceed with sending to server
                 ClientConnection connection = new ClientConnection("localhost", 12345); // Use CommonProtocol constants
-                connection.send("REGISTER##" + firstName + "##" + lastName + "##" + email + "##" + password); // Use UserProtocol constants
+                connection.send(UserProtocol.REGISTER + CommonProtocol.SEP + firstName + CommonProtocol.SEP + lastName + CommonProtocol.SEP + email + CommonProtocol.SEP + password); // Use UserProtocol constants
                 String response = connection.receive();
                 connection.close();
 
