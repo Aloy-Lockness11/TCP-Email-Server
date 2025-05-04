@@ -2,9 +2,8 @@ package model;
 
 import exception.EmailNotFoundException;
 import exception.UserNotFoundException;
-import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import utils.EmailValidator;
+import utils.validators.EmailValidator;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

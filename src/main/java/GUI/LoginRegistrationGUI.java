@@ -2,7 +2,7 @@ package GUI;
 
 import client.ClientConnection;
 import model.User;
-import utils.UserValidator;
+import utils.validators.UserValidator;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 

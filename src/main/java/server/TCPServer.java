@@ -60,13 +60,11 @@ public class TCPServer {
         serverRunning = true;
         serverThread = new Thread(() -> {
             try (ServerSocket serverSocket = new ServerSocket(port)) {
-                System.out.println("TCP Server Started Listening on port " + port);
                 log.info("Server Started and Listening on port {}", port);
 
                 while (serverRunning) {
                     // Accept incoming client connections
                     Socket clientSocket = serverSocket.accept();
-                    System.out.println("Client connected from " + clientSocket.getInetAddress());
                     log.info("Client connected from {}", clientSocket.getInetAddress());
 
                     // Create a new thread to handle the client connection

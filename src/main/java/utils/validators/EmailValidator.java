@@ -1,4 +1,4 @@
-package utils;
+package utils.validators;
 import exception.InvalidEmailDetailsException;
 import jakarta.validation.*;
 import model.Email;

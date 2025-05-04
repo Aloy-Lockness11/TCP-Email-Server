@@ -4,10 +4,8 @@ import exception.InvalidUserCredentialsException;
 import exception.InvalidUserDetailsException;
 import exception.UserAlreadyExistsException;
 import exception.UserNotFoundException;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import utils.UserValidator;
+import utils.validators.UserValidator;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

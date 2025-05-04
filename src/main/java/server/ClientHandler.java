@@ -11,9 +11,9 @@ import java.net.Socket;
 import java.util.List;
 
 
-import utils.Protocols.UserProtocol;
-import utils.Protocols.EmailProtocol;
-import utils.Protocols.CommonProtocol;
+import utils.protocols.UserProtocol;
+import utils.protocols.EmailProtocol;
+import utils.protocols.CommonProtocol;
 
 /**
  * ClientHandler is responsible for handling client requests in a separate thread.

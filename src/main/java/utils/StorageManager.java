@@ -13,6 +13,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,7 +26,10 @@ public class StorageManager {
 
     private static final String USERS_FILE = "data/users.json";
     private static final String EMAILS_FILE = "data/emails.json";
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+            .setPrettyPrinting()
+            .create();
 
     /**
      * Saves the given map of users to a JSON file.
