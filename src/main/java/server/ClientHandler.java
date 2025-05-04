@@ -8,12 +8,12 @@ import model.UserManagerInterface;
 import utils.TCPUtils;
 
 import java.net.Socket;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-
-import utils.Protocols.UserProtocol;
-import utils.Protocols.EmailProtocol;
-import utils.Protocols.CommonProtocol;
+import utils.protocols.UserProtocol;
+import utils.protocols.EmailProtocol;
+import utils.protocols.CommonProtocol;
 
 /**
  * ClientHandler is responsible for handling client requests in a separate thread.
@@ -58,7 +58,6 @@ public class ClientHandler implements Runnable {
      * @return The response string to be sent back to the client.
      */
     private String handleRequest(String request) {
-        // Split the request string into parts
         final String SEP = CommonProtocol.SEP;
         String[] parts = request.split(SEP);
         if (parts.length == 0) return EmailProtocol.UNKNOWN_COMMAND;
@@ -67,7 +66,10 @@ public class ClientHandler implements Runnable {
             case UserProtocol.REGISTER -> handleRegister(parts);
             case UserProtocol.LOGIN -> handleLogin(parts);
             case EmailProtocol.SEND_EMAIL -> handleSendEmail(parts);
-            case EmailProtocol.GET_EMAILS -> handleGetEmails(parts);
+            case EmailProtocol.GET_EMAILS -> handleGetEmailsFlexible(parts);
+            case EmailProtocol.LIST_INBOX -> handleListEmails(parts, false);
+            case EmailProtocol.LIST_SENT -> handleListEmails(parts, true);
+            case EmailProtocol.MARK_AS_VIEWED -> handleMarkAsViewed(parts);
             default -> EmailProtocol.UNKNOWN_COMMAND;
         };
     }
@@ -144,21 +146,23 @@ public class ClientHandler implements Runnable {
     }
 
     /**
-     *
-     * Handles the GET_EMAILS command.
-     * It retrieves all emails for a user.
+     * Handles the LIST_INBOX and LIST_SENT commands.
+     * It retrieves emails for a user, either from the inbox or sent items.
      *
      * @param parts The parts of the request string.
-     * @return The response string containing the emails.
+     * @param isSent Indicates whether to retrieve sent emails (true) or received emails (false).
+     * @return The response string indicating the result of the email retrieval.
      */
-    private String handleGetEmails(String[] parts) {
-        // Format should be: GETEMAILS##userEmail
+    private String handleListEmails(String[] parts, boolean isSent) {
         if (parts.length != 2) return EmailProtocol.GET_EMAILS + CommonProtocol.SEP + EmailProtocol.INVALID_FORMAT;
 
         String userEmail = parts[1];
 
         try {
-            List<Email> emails = emailManager.getReceivedEmails(userEmail);
+            List<Email> emails = isSent ?
+                    emailManager.getSentEmails(userEmail) :
+                    emailManager.getReceivedEmails(userEmail);
+
             StringBuilder response = new StringBuilder(EmailProtocol.GET_EMAILS + CommonProtocol.SEP + EmailProtocol.SUCCESS);
 
             if (emails.isEmpty()) {
@@ -174,7 +178,9 @@ public class ClientHandler implements Runnable {
                             .append(CommonProtocol.SEP)
                             .append(email.getContent())
                             .append(CommonProtocol.SEP)
-                            .append(email.getTimestamp());
+                            .append(email.getTimestamp())
+                            .append(CommonProtocol.SEP)
+                            .append(email.isViewed());
                 }
             }
 
@@ -186,4 +192,114 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    /**
+     * Handles the GETEMAILS command.
+     * It retrieves emails for a user, either from the inbox or sent items.
+     *
+     * @param parts The parts of the request string.
+     * @return The response string indicating the result of the email retrieval.
+     */
+    // New flexible GETEMAILS handler
+    private String handleGetEmailsFlexible(String[] parts) {
+        // Supports: GETEMAILS##user, GETEMAILS##user##INBOX, GETEMAILS##user##SENT
+        if (parts.length == 2) {
+            // Default to inbox
+            return handleListEmails(new String[]{EmailProtocol.GET_EMAILS, parts[1]}, false);
+        } else if (parts.length == 3) {
+            String box = parts[2].toUpperCase();
+            if (box.equals(EmailProtocol.INBOX)) {
+                return handleListEmails(new String[]{EmailProtocol.GET_EMAILS, parts[1]}, false);
+            } else if (box.equals(EmailProtocol.SENT)) {
+                return handleListEmails(new String[]{EmailProtocol.GET_EMAILS, parts[1]}, true);
+            } else {
+                return EmailProtocol.GET_EMAILS + CommonProtocol.SEP + EmailProtocol.INVALID_FORMAT;
+            }
+        } else {
+            return EmailProtocol.GET_EMAILS + CommonProtocol.SEP + EmailProtocol.INVALID_FORMAT;
+        }
+    }
+
+    /**
+     * Handles the MARKASVIEWED command.
+     * It marks an email as viewed.
+     *
+     * @param parts The parts of the request string.
+     * @return The response string indicating the result of the email marking.
+     */
+    private String handleMarkAsViewed(String[] parts) {
+        // Format: MARKASVIEWED##emailId
+        if (parts.length != 2) return EmailProtocol.MARK_AS_VIEWED + CommonProtocol.SEP + EmailProtocol.INVALID_FORMAT;
+        String emailId = parts[1];
+        try {
+            emailManager.markEmailAsViewed(emailId);
+            return EmailProtocol.MARK_AS_VIEWED + CommonProtocol.SEP + EmailProtocol.SUCCESS;
+        } catch (Exception e) {
+            return EmailProtocol.MARK_AS_VIEWED + CommonProtocol.SEP + EmailProtocol.FAILURE + CommonProtocol.SEP + e.getMessage();
+        }
+    }
+
+    /**
+     * Handles the SEARCH_RECEIVED and SEARCH_SENT commands.
+     * It searches for emails based on a query string.
+     *
+     * @param parts The parts of the request string.
+     * @param isSent Indicates whether to search in sent emails (true) or received emails (false).
+     * @return The response string indicating the result of the email search.
+     */
+    private String handleSearchEmails(String[] parts, boolean isSent) {
+        // Format: SEARCH_RECEIVED##userEmail##query or SEARCH_SENT##userEmail##query
+        if (parts.length != 3) return (isSent ? EmailProtocol.SEARCH_SENT : EmailProtocol.SEARCH_RECEIVED) + CommonProtocol.SEP + EmailProtocol.INVALID_FORMAT;
+        String userEmail = parts[1];
+        String query = parts[2].toLowerCase();
+        try {
+            List<Email> emails = isSent ? emailManager.getSentEmails(userEmail) : emailManager.getReceivedEmails(userEmail);
+            StringBuilder response = new StringBuilder((isSent ? EmailProtocol.SEARCH_SENT : EmailProtocol.SEARCH_RECEIVED) + CommonProtocol.SEP + EmailProtocol.SUCCESS);
+            boolean found = false;
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            for (Email email : emails) {
+                String formattedDate = "";
+                try {
+                    formattedDate = email.getTimestamp().format(formatter);
+                } catch (Exception ignored) {}
+                boolean match = email.getSubject().toLowerCase().contains(query)
+                        || email.getSender().toLowerCase().contains(query)
+                        || email.getRecipient().toLowerCase().contains(query)
+                        || formattedDate.contains(query);
+                if (match) {
+                    found = true;
+                    if (isSent) {
+                        // ID, recipient, subject, timestamp, viewed
+                        response.append(CommonProtocol.SEP)
+                                .append(email.getId())
+                                .append(CommonProtocol.SEP)
+                                .append(email.getRecipient())
+                                .append(CommonProtocol.SEP)
+                                .append(email.getSubject())
+                                .append(CommonProtocol.SEP)
+                                .append(email.getTimestamp())
+                                .append(CommonProtocol.SEP)
+                                .append(email.isViewed());
+                    } else {
+                        // ID, sender, subject, timestamp, viewed
+                        response.append(CommonProtocol.SEP)
+                                .append(email.getId())
+                                .append(CommonProtocol.SEP)
+                                .append(email.getSender())
+                                .append(CommonProtocol.SEP)
+                                .append(email.getSubject())
+                                .append(CommonProtocol.SEP)
+                                .append(email.getTimestamp())
+                                .append(CommonProtocol.SEP)
+                                .append(email.isViewed());
+                    }
+                }
+            }
+            if (!found) {
+                response.append(CommonProtocol.SEP).append(EmailProtocol.NO_EMAILS);
+            }
+            return response.toString();
+        } catch (Exception e) {
+            return (isSent ? EmailProtocol.SEARCH_SENT : EmailProtocol.SEARCH_RECEIVED) + CommonProtocol.SEP + EmailProtocol.FAILURE + CommonProtocol.SEP + e.getMessage();
+        }
+    }
 }

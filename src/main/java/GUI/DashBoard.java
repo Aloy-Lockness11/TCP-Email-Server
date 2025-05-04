@@ -1,13 +1,11 @@
 package GUI;
 
 import client.ClientConnection;
-import utils.Protocols.CommonProtocol;
-import utils.Protocols.EmailProtocol;
+import utils.protocols.CommonProtocol;
+import utils.protocols.EmailProtocol;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;

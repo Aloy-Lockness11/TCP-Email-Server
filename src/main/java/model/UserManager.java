@@ -4,10 +4,8 @@ import exception.InvalidUserCredentialsException;
 import exception.InvalidUserDetailsException;
 import exception.UserAlreadyExistsException;
 import exception.UserNotFoundException;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import utils.UserValidator;
+import utils.validators.UserValidator;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -89,5 +87,15 @@ public class UserManager implements UserManagerInterface {
         } else {
             log.warn("Attempted to load null user data. Skipping.");
         }
+    }
+
+    /**
+     * Gets the user map.  From the concurrent hash map.
+     *
+     * @return the user map
+     */
+    @Override
+    public Map<String, User> getUserMap() {
+        return users;
     }
 }

@@ -3,6 +3,7 @@ package model;
 import exception.InvalidUserCredentialsException;
 import exception.*;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public interface UserManagerInterface {
@@ -37,4 +38,11 @@ public interface UserManagerInterface {
      * @param userMap the user map to set
      */
     void setUserMap(ConcurrentHashMap<String, User> userMap);
+
+    /**
+     * Gets the user map.
+     *
+     * @return the user map
+     */
+    Map<String, User> getUserMap();
 }

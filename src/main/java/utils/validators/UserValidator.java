@@ -1,4 +1,4 @@
-package utils;
+package utils.validators;
 import exception.InvalidUserDetailsException;
 import jakarta.validation.*;
 import model.User;

@@ -1,4 +1,4 @@
-package utils.Protocols;
+package utils.protocols;
 
 public class CommonProtocol {
     public static final String SEP = "##";

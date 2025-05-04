@@ -2,9 +2,8 @@ package model;
 
 import exception.EmailNotFoundException;
 import exception.UserNotFoundException;
-import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import utils.EmailValidator;
+import utils.validators.EmailValidator;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -150,7 +149,17 @@ public class EmailManager implements EmailManagerInterface {
             log.warn("Attempted to load null email data. Skipping.");
         }
     }
-    
+
+    /**
+     * Gets the email map. from the concurrent hash map
+     *
+     * @return The email map.
+     */
+    @Override
+    public Map<String, Email> getEmailMap() {
+        return emails;
+    }
+
     /**
      * Sets the user map for email validation
      * This method is used to load user data into memory for email validation
