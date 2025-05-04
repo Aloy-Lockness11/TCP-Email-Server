@@ -50,6 +50,8 @@ public class User {
     )
     private transient String password;
 
+    private boolean isLoggedIn;
+
     private List<Email> emailsSent;
     private List<Email> emailsReceived;
 

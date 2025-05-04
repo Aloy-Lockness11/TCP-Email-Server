@@ -19,11 +19,26 @@ import utils.protocols.CommonProtocol;
  * ClientHandler is responsible for handling client requests in a separate thread.
  * It processes commands such as REGISTER and LOGIN, and interacts with the UserManager.
  */
-@AllArgsConstructor
+
 public class ClientHandler implements Runnable {
     private final Socket socket;
     private final UserManagerInterface userManager;
     private final EmailManagerInterface emailManager;
+    private String loggedInUserEmail = null;
+    private boolean shouldTerminate = false;
+
+    /**
+     * Constructor for ClientHandler.
+     *
+     * @param socket       The socket connected to the client.
+     * @param userManager  The UserManager instance for user operations.
+     * @param emailManager The EmailManager instance for email operations.
+     */
+    public ClientHandler(Socket socket, UserManagerInterface userManager, EmailManagerInterface emailManager) {
+        this.socket = socket;
+        this.userManager = userManager;
+        this.emailManager = emailManager;
+    }
 
     /**
      * The run method is executed when the thread is started.
@@ -41,6 +56,8 @@ public class ClientHandler implements Runnable {
                 // If the request is empty, break the loop
                 String response = handleRequest(request.trim());
                 TCPUtils.sendMessage(socket, response);
+
+                if (shouldTerminate) break;
             }
         } catch (Exception e) {
             System.err.println("Client error: " + e.getMessage());
@@ -72,6 +89,7 @@ public class ClientHandler implements Runnable {
             case EmailProtocol.MARK_AS_VIEWED -> handleMarkAsViewed(parts);
             case EmailProtocol.SEARCH_RECEIVED -> handleSearchEmails(parts, false);
             case EmailProtocol.SEARCH_SENT -> handleSearchEmails(parts, true);
+            case UserProtocol.LOGOUT -> handleLogout();
             default -> EmailProtocol.UNKNOWN_COMMAND;
         };
     }
@@ -110,7 +128,11 @@ public class ClientHandler implements Runnable {
         if (parts.length != 3) return UserProtocol.LOGIN + CommonProtocol.SEP + UserProtocol.INVALID_FORMAT;
 
         try {
-            userManager.loginUser(parts[1], parts[2]);
+            String email = parts[1];
+            String password = parts[2];
+            userManager.loginUser(email, password);
+            userManager.setLoggedIn(email, true);
+            loggedInUserEmail = email;
             return UserProtocol.LOGIN + CommonProtocol.SEP + UserProtocol.SUCCESS;
         } catch (UserNotFoundException e) {
             return UserProtocol.LOGIN + CommonProtocol.SEP + UserProtocol.NO_USER;
@@ -304,4 +326,27 @@ public class ClientHandler implements Runnable {
             return (isSent ? EmailProtocol.SEARCH_SENT : EmailProtocol.SEARCH_RECEIVED) + CommonProtocol.SEP + EmailProtocol.FAILURE + CommonProtocol.SEP + e.getMessage();
         }
     }
+
+    /**
+     * Handles the LOGOUT command.
+     * It logs out the currently logged-in user.
+     *
+     * @return The response string indicating the result of the logout attempt.
+     */
+    private String handleLogout() {
+        if (loggedInUserEmail != null) {
+            userManager.setLoggedIn(loggedInUserEmail, false);
+            String oldUser = loggedInUserEmail;
+            loggedInUserEmail = null;
+
+            // Mark socket to close
+            shouldTerminate = true;
+
+            return UserProtocol.LOGOUT + CommonProtocol.SEP + UserProtocol.SUCCESS + CommonProtocol.SEP + oldUser;
+        } else {
+            return UserProtocol.LOGOUT + CommonProtocol.SEP + UserProtocol.FAILURE + CommonProtocol.SEP + "Not logged in.";
+        }
+    }
+
+
 }

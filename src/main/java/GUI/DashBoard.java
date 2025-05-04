@@ -4,6 +4,7 @@ import client.ClientConnection;
 import exception.SecureConnectionException;
 import utils.protocols.CommonProtocol;
 import utils.protocols.EmailProtocol;
+import utils.protocols.UserProtocol;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,6 +36,7 @@ public class DashBoard extends JFrame {
     private JLabel tickLabel;
     private JButton replyButton;
     private EmailDetails currentEmailDetails;
+    private ClientConnection connection;
 
     /**
      * Holds metadata for an email displayed in the list.
@@ -62,12 +64,13 @@ public class DashBoard extends JFrame {
      * Sets up sidebar, search, email list, preview, and compose panel.
      * @param username the user's email address
      */
-    public DashBoard(String username) {
+    public DashBoard(String username,ClientConnection connection) {
         this.username = username;
         setTitle("Email Dashboard - " + username);
         setSize(1000, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        this.connection = connection;
 
         // Main layout: sidebar + main area
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -138,7 +141,15 @@ public class DashBoard extends JFrame {
         btnLogout.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnLogout.setBorder(BorderFactory.createEmptyBorder(8, 24, 8, 24));
         btnLogout.addActionListener(e -> {
-            dispose();
+            try {
+                this.connection.send(UserProtocol.LOGOUT);
+                String response = this.connection.receive();
+                System.out.println("Logout response: " + response);
+                this.connection.close();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            dispose(); // close UI
             new LoginRegistrationGUI();
         });
         sidebar.add(btnLogout);
@@ -322,7 +333,7 @@ public class DashBoard extends JFrame {
     private void markEmailAsViewed(String emailId) {
         // Send MARKASVIEWED to server
         try {
-            ClientConnection connection = new ClientConnection("localhost", 12345);
+            ClientConnection connection = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
             connection.send(EmailProtocol.MARK_AS_VIEWED + CommonProtocol.SEP + emailId);
             connection.receive();
             connection.close();
@@ -340,7 +351,7 @@ public class DashBoard extends JFrame {
                 userEmail = userEmail + "@voidmail.com";
             }
 
-            ClientConnection connection = new ClientConnection("localhost", 12345);
+            ClientConnection connection = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
             connection.send(EmailProtocol.GET_EMAILS + CommonProtocol.SEP + userEmail + CommonProtocol.SEP + (isSent ? "SENT" : "INBOX"));
             String response = connection.receive();
             connection.close();
@@ -500,7 +511,7 @@ public class DashBoard extends JFrame {
                 sender = sender + "@voidmail.com";
             }
             try {
-                ClientConnection connection = new ClientConnection("localhost", 12345);
+                ClientConnection connection = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
                 connection.send(EmailProtocol.SEND_EMAIL + CommonProtocol.SEP +
                         sender + CommonProtocol.SEP +
                         to + CommonProtocol.SEP +
@@ -559,7 +570,7 @@ public class DashBoard extends JFrame {
                 userEmail = userEmail + "@voidmail.com";
             }
             // Count inbox
-            ClientConnection connectionInbox = new ClientConnection("localhost", 12345);
+            ClientConnection connectionInbox = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
             connectionInbox.send(EmailProtocol.GET_EMAILS + CommonProtocol.SEP + userEmail + CommonProtocol.SEP + "INBOX");
             String responseInbox = connectionInbox.receive();
             connectionInbox.close();
@@ -572,7 +583,7 @@ public class DashBoard extends JFrame {
                 }
             }
             // Count sent
-            ClientConnection connectionSent = new ClientConnection("localhost", 12345);
+            ClientConnection connectionSent = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
             connectionSent.send(EmailProtocol.GET_EMAILS + CommonProtocol.SEP + userEmail + CommonProtocol.SEP + "SENT");
             String responseSent = connectionSent.receive();
             connectionSent.close();
@@ -630,13 +641,13 @@ public class DashBoard extends JFrame {
             }
             // Search Inbox (received)
             String commandInbox = EmailProtocol.SEARCH_RECEIVED;
-            ClientConnection connectionInbox = new ClientConnection("localhost", 12345);
+            ClientConnection connectionInbox = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
             connectionInbox.send(commandInbox + CommonProtocol.SEP + userEmail + CommonProtocol.SEP + query);
             String responseInbox = connectionInbox.receive();
             connectionInbox.close();
             // Search Sent
             String commandSent = EmailProtocol.SEARCH_SENT;
-            ClientConnection connectionSent = new ClientConnection("localhost", 12345);
+            ClientConnection connectionSent = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
             connectionSent.send(commandSent + CommonProtocol.SEP + userEmail + CommonProtocol.SEP + query);
             String responseSent = connectionSent.receive();
             connectionSent.close();

@@ -4,10 +4,8 @@ public class EmailProtocol {
     // REQUEST CODES
     public static final String LIST_INBOX = "LIST_INBOX";
     public static final String LIST_SENT = "LIST_SENT";
-    public static final String READ = "READ";
     public static final String MARK_AS_VIEWED = "MARK_AS_VIEWED";
     public static final String INBOX = "INBOX";
-    public static final String SEND = "SEND";
     public static final String SENT = "SENT";
     public static final String SEARCH_RECEIVED = "SEARCH_RECEIVED";
     public static final String SEARCH_SENT = "SEARCH_SENT";

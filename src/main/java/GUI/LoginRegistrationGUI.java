@@ -231,7 +231,7 @@ public class LoginRegistrationGUI extends JFrame {
             // No need to use UserValidator here, server handles login validation
 
             try {
-                ClientConnection connection = new ClientConnection("localhost", 12345); // Use CommonProtocol constants ideally
+                ClientConnection connection = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT); // Use CommonProtocol constants ideally
                 connection.send(UserProtocol.LOGIN + CommonProtocol.SEP + email + CommonProtocol.SEP + password); 
                 String response = connection.receive();
                 connection.close();
@@ -240,7 +240,7 @@ public class LoginRegistrationGUI extends JFrame {
                     JOptionPane.showMessageDialog(this, "Login successful!");
                     dispose(); // Close login window
                     // Pass the validated email (username) to the dashboard
-                    new DashBoard(email); // Open dashboard window
+                    new DashBoard(email,connection); // Open dashboard window
                 } else {
                     // Provide more specific feedback if possible based on server response
                     JOptionPane.showMessageDialog(this, "Login failed: " + response, "Login Error", JOptionPane.ERROR_MESSAGE);
@@ -409,7 +409,7 @@ public class LoginRegistrationGUI extends JFrame {
                 UserValidator.validate(userToValidate);
 
                 // If validation passes, proceed with sending to server
-                ClientConnection connection = new ClientConnection("localhost", 12345); // Use CommonProtocol constants
+                ClientConnection connection = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT); // Use CommonProtocol constants
                 connection.send(UserProtocol.REGISTER + CommonProtocol.SEP + firstName + CommonProtocol.SEP + lastName + CommonProtocol.SEP + email + CommonProtocol.SEP + password); // Use UserProtocol constants
                 String response = connection.receive();
                 connection.close();

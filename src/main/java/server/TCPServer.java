@@ -3,17 +3,17 @@ package server;
 import exception.FailedToLoadException;
 import exception.FailedToSaveException;
 import lombok.extern.slf4j.Slf4j;
-import model.EmailManager;
-import model.EmailManagerInterface;
-import model.UserManager;
-import model.UserManagerInterface;
+import model.*;
 import utils.StorageManager;
 
 import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.Socket;
 import java.security.KeyStore;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -129,6 +129,9 @@ public class TCPServer {
                     break;
                 case "4":
                     handleFileManagementMenu(sc);
+                    break;
+                case "5":
+                    listLoggedInUsers();
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -294,6 +297,51 @@ public class TCPServer {
                 log.debug("Directory already exists: {}", dir);
             }
         }
+
+        // Create JSON files if they don't exist
+        createFileIfMissing("data/users.json");
+        createFileIfMissing("data/emails.json");
+    }
+
+    /**
+     * This method creates a file if it does not exist.
+     * It initializes the file with an empty JSON object or array based on the file name.
+     *
+     * @param path The path of the file to create
+     */
+    private static void createFileIfMissing(String path) {
+        File file = new File(path);
+        if (!file.exists()) {
+            try {
+                boolean created = file.createNewFile();
+                if (created) {
+                    try (FileWriter writer = new FileWriter(file)) {
+                        writer.write("{}");
+                    }
+                    log.info("Created and initialized file: {}", path);
+                } else {
+                    log.warn("Failed to create file: {}", path);
+                }
+            } catch (IOException e) {
+                log.error("Error creating file {}: {}", path, e.getMessage());
+            }
+        } else {
+            log.debug("File already exists: {}", path);
+        }
+    }
+
+    /**
+     * This method lists all logged-in users
+     * It retrieves the list of logged-in users from the UserManager and displays them.
+     */
+    private static void listLoggedInUsers() {
+        List<User> loggedInUsers = userManager.getLoggedInUsers();
+        if (loggedInUsers.isEmpty()) {
+            System.out.println("No users are currently logged in.");
+        } else {
+            System.out.println("Logged-in users:");
+            loggedInUsers.forEach(user -> System.out.println("- " + user.getEmail()));
+        }
     }
 
     /**
@@ -306,6 +354,7 @@ public class TCPServer {
         System.out.println("2. Stop Server");
         System.out.println("3. Exit Program");
         System.out.println("4. File Management Options");
+        System.out.println("5. View Logged-In Users");
 
     }
 

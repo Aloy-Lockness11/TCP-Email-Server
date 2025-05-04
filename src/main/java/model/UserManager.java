@@ -7,8 +7,10 @@ import utils.validators.UserValidator;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * UserManager class to manage user registration and login.
@@ -97,6 +99,18 @@ public class UserManager implements UserManagerInterface {
     }
 
     /**
+     * Gets all logged-in users from concurrent hash map.
+     */
+    @Override
+    public List<User> getLoggedInUsers() {
+        return users.values().stream()
+                .filter(User::isLoggedIn)
+                .collect(Collectors.toList());
+    }
+
+
+
+    /**
      * Sets the user map
      * This method is used to load user data into memory
      * It clears the existing user map and loads the new data
@@ -122,5 +136,22 @@ public class UserManager implements UserManagerInterface {
     @Override
     public Map<String, User> getUserMap() {
         return users;
+    }
+
+    /**
+     * Sets the logged-in status of a user.
+     * in the concurrent hash map. if the user is not found, it does nothing.
+     *
+     * @param email  the email of the user
+     * @param status the logged-in status to set
+     */
+    @Override
+    public void setLoggedIn(String email, boolean status) {
+        User user = users.get(email);
+        if (user != null) {
+            user.setLoggedIn(status);
+        }else {
+            log.warn("User not found for setting logged-in status: {}", email);
+        }
     }
 }

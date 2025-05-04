@@ -12,6 +12,8 @@ import java.security.KeyStore;
 /**
  * ClientConnection class that provides methods to establish a connection to a server,
  * send messages, receive messages, and close the connection
+ * This utilizes SSL for secure communication.
+ * It uses a keystore to manage the server's public key.
  */
 public class ClientConnection {
     private SSLSocket socket;
