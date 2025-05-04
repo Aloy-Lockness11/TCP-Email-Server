@@ -1,5 +1,6 @@
 package server;
 
+import exception.FailedToLoadException;
 import lombok.extern.slf4j.Slf4j;
 import model.EmailManager;
 import model.EmailManagerInterface;
@@ -20,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Slf4j
 public class TCPServer {
-    private static int port = 12345;
+    private static final int port = 12345;
     private static boolean serverRunning = true;
     private static boolean programRunning = true;
     private static Thread serverThread;
@@ -36,45 +37,9 @@ public class TCPServer {
      * @param args Command line arguments
      */
     public static void main(String[] args) {
-
         Scanner sc = new Scanner(System.in);
-
-        // Menu System to handle Running of the server
-        while (programRunning) {
-            printMenu();
-            String choice = sc.nextLine();
-
-            switch (choice) {
-                case "1":
-                    startServer();
-                    break;
-                case "2":
-                    serverRunning = false;
-                    System.out.println("Server Stopped");
-                    log.info("Server Stopped");
-                    break;
-                case "3":
-                    programRunning = false;
-                    System.out.println("Exiting...");
-                    log.info("Application Closed");
-                    break;
-                case "4":
-                    StorageManager.clearUsers();
-                    break;
-                case "5":
-                    StorageManager.clearEmails();
-                    break;
-                case "6":
-                    userManager.setUserMap(new ConcurrentHashMap<>(StorageManager.loadUsers()));
-                    emailManager.setEmailMap(new ConcurrentHashMap<>(StorageManager.loadEmails()));
-                    log.info("Data manually reloaded from storage.");
-                    break;
-                default:
-                    System.out.println("Invalid choice. Please try again.");
-            }
-
-        }
-
+        createStartupDirectories();
+        handleMainMenuChoice(sc);
     }
 
     /**
@@ -89,10 +54,6 @@ public class TCPServer {
             System.out.println("Server is already running.");
             return;
         }
-
-        userManager.setUserMap(new ConcurrentHashMap<>(StorageManager.loadUsers()));
-        emailManager.setEmailMap(new ConcurrentHashMap<>(StorageManager.loadEmails()));
-        log.info("Data loaded from storage on startup.");
 
         // Create a new thread for the server
         serverRunning = true;
@@ -118,22 +79,165 @@ public class TCPServer {
         });
 
         serverThread.start();
+        System.out.println("Server is running...");
+        log.info("Server Started");
+    }
+
+    /**
+     * This method handles the main menu options for the user
+     * It provides options to start, stop, and exit the server.
+     *
+     * @param sc Scanner object to read user input
+     */
+    private static void handleMainMenuChoice(Scanner sc) {
+
+        while (programRunning) {
+            mainMenuDisplay();
+            System.out.print("Choose an option: ");
+            String choice = sc.nextLine();
+            System.out.println("-----------------------------------");
+            switch (choice) {
+                case "1":
+                    try{
+                        // Load data from storage into memory
+                        userManager.setUserMap(new ConcurrentHashMap<>(StorageManager.loadUsers()));
+                        emailManager.setEmailMap(new ConcurrentHashMap<>(StorageManager.loadEmails()));
+                        log.info("Data loaded from storage on startup.");
+                    } catch (FailedToLoadException e) {
+                        System.out.println("Failed to load data: " + e.getMessage());
+                        log.error("Failed to load data on startup", e);
+                    }
+                    startServer();
+
+                    break;
+                case "2":
+                    serverRunning = false;
+                    try {
+                        StorageManager.saveUsersAndEmails(userManager.getUserMap(), emailManager.getEmailMap());
+                        System.out.println("Data saved");
+                        log.info("Data saved");
+                    } catch (Exception e) {
+                        System.out.println("Failed to save data before shutdown: " + e.getMessage());
+                        log.error("Failed to save data on shutdown: ", e);
+                    }
+                    System.out.println("Server Stopped");
+                    log.info("Server Stopped");
+                    break;
+                case "3":
+                    programRunning = false;
+                    System.out.println("Exiting program...");
+                    break;
+                case "4":
+                    handleFileManagementMenu(sc);
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+            System.out.println("-----------------------------------");
+
+        }
+    }
+
+    /**
+     * This method handles the file management menu options for the user
+     * It provides options to clear, load, and save data files.
+     *
+     * @param sc Scanner object to read user input
+     */
+    private static void handleFileManagementMenu(Scanner sc) {
+        boolean inFileMenu = true;
+
+        while (inFileMenu) {
+            fileManagementMenuDisplay();
+            String choice = sc.nextLine();
+
+            System.out.println("-----------------------------------");
+            try {
+                switch (choice) {
+                    case "1":
+                        StorageManager.clearUsers();
+                        System.out.println("User data cleared.");
+                        break;
+                    case "2":
+                        StorageManager.clearEmails();
+                        System.out.println("Email data cleared.");
+                        break;
+                    case "3":
+                        StorageManager.clearFiles();
+                        System.out.println("All data files cleared.");
+                        break;
+                    case "4":
+                        userManager.setUserMap(new ConcurrentHashMap<>(StorageManager.loadUsers()));
+                        emailManager.setEmailMap(new ConcurrentHashMap<>(StorageManager.loadEmails()));
+                        System.out.println("Data loaded into memory.");
+                        break;
+                    case "5":
+                        StorageManager.saveUsers(userManager.getUserMap());
+                        StorageManager.saveEmails(emailManager.getEmailMap());
+                        System.out.println("Data saved to files.");
+                        break;
+                    case "6":
+                        inFileMenu = false;
+                        break;
+                    default:
+                        System.out.println("Invalid choice. Try again.");
+                }
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+                log.error("File management operation failed", e);
+            }
+            System.out.println("-----------------------------------");
+        }
+    }
+
+    /**
+     * Ensures required directories like 'logs/' and 'data/' exist on startup.
+     */
+    private static void createStartupDirectories() {
+        String[] requiredDirs = {"logs", "data"};
+
+        for (String dir : requiredDirs) {
+            File directory = new File(dir);
+            if (!directory.exists()) {
+                boolean created = directory.mkdirs();
+                if (created) {
+                    log.info("Created missing directory: {}", dir);
+                } else {
+                    log.warn("Failed to create directory: {}", dir);
+                }
+            } else {
+                log.debug("Directory already exists: {}", dir);
+            }
+        }
+    }
+
+    /**
+     * This method prints the file management menu options for the user.
+     */
+    private static void fileManagementMenuDisplay() {
+        System.out.println("\n--- File Management Menu ---");
+        System.out.println("1. Clear Users");
+        System.out.println("2. Clear Emails");
+        System.out.println("3. Clear Both Files");
+        System.out.println("4. Load All Data");
+        System.out.println("5. Save All Data");
+        System.out.println("6. Back to Main Menu");
+        System.out.print("Choose an option: ");
     }
 
     /**
      * This method prints the menu options for the user.
      */
-    private static void printMenu() {
+    private static void mainMenuDisplay() {
 
-        System.out.println("TCP Server Menu:");
+        System.out.println("=== TCP Server Main Menu ===");
         System.out.println("1. Start Server");
         System.out.println("2. Stop Server");
-        System.out.println("3. Exit");
-        System.out.println("4. Clear User Data");
-        System.out.println("5. Clear Email Data");
-        System.out.println("6. Load All Data");
-        System.out.print("Choose an option: ");
+        System.out.println("3. Exit and Save");
+        System.out.println("4. File Management Options");
 
-        // Add logic to handle user input and call appropriate methods
     }
+
+
+
 }

@@ -4,6 +4,7 @@ import exception.EmailNotFoundException;
 import exception.UserNotFoundException;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public interface EmailManagerInterface {
@@ -51,4 +52,10 @@ public interface EmailManagerInterface {
      */
     void setEmailMap(ConcurrentHashMap<String, Email> emailMap);
 
+    /**
+     * Gets the email map.
+     *
+     * @return The email map.
+     */
+    Map<String, Email> getEmailMap();
 }

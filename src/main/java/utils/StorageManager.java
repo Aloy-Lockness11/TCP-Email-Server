@@ -3,6 +3,8 @@ package utils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import exception.FailedToLoadException;
+import exception.FailedToSaveException;
 import lombok.extern.slf4j.Slf4j;
 import model.Email;
 import model.User;
@@ -21,21 +23,21 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class StorageManager {
 
-    private static final String USERS_FILE = "users.json";
-    private static final String EMAILS_FILE = "emails.json";
+    private static final String USERS_FILE = "data/users.json";
+    private static final String EMAILS_FILE = "data/emails.json";
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     /**
      * Saves the given map of users to a JSON file.
      *
      * @param users The map of users to save
+     * @throws FailedToSaveException if the file cannot be written
      */
-    public static void saveUsers(Map<String, User> users) {
+    public static void saveUsers(Map<String, User> users) throws FailedToSaveException {
         try (FileWriter writer = new FileWriter(USERS_FILE)) {
             gson.toJson(users, writer);
-            log.info("Users saved to '{}'", USERS_FILE);
         } catch (IOException e) {
-            log.error("Failed to save users: {}", e.getMessage(), e);
+            throw new FailedToSaveException("Failed to save users to " + USERS_FILE, e);
         }
     }
 
@@ -43,30 +45,45 @@ public class StorageManager {
      * Saves the given map of emails to a JSON file.
      *
      * @param emails The map of emails to save
+     * @throws FailedToSaveException if the file cannot be written
      */
-    public static void saveEmails(Map<String, Email> emails) {
+    public static void saveEmails(Map<String, Email> emails) throws FailedToSaveException {
         try (FileWriter writer = new FileWriter(EMAILS_FILE)) {
             gson.toJson(emails, writer);
-            log.info("Emails saved to '{}'", EMAILS_FILE);
         } catch (IOException e) {
-            log.error("Failed to save emails: {}", e.getMessage(), e);
+            throw new FailedToSaveException("Failed to save emails to " + EMAILS_FILE, e);
         }
     }
 
     /**
-     * Loads the map of users from a JSON file.
+     * Saves the given map of users and emails to their respective JSON files.
+     *
+     * @param users  The map of users to save
+     * @param emails The map of emails to save
+     * @throws FailedToSaveException if the files cannot be written
+     */
+    public static void saveUsersAndEmails(Map<String, User> users, Map<String, Email> emails) throws FailedToSaveException {
+        saveUsers(users);
+        saveEmails(emails);
+    }
+
+    /**
+     * Loads the map of users from a JSON file as concurrent hash map.
      *
      * @return The map of users
+     * @throws FailedToLoadException if the file cannot be read
      */
-    public static Map<String, User> loadUsers() {
+    public static Map<String, User> loadUsers() throws FailedToLoadException {
         try (FileReader reader = new FileReader(USERS_FILE)) {
             Type type = new TypeToken<Map<String, User>>() {}.getType();
             Map<String, User> users = gson.fromJson(reader, type);
-            log.info("Users loaded from '{}'", USERS_FILE);
-            return users != null ? new ConcurrentHashMap<>(users) : new ConcurrentHashMap<>();
+            if (users == null||users.isEmpty()) {
+                return new ConcurrentHashMap<>();
+            } else {
+                return new ConcurrentHashMap<>(users);
+            }
         } catch (IOException e) {
-            log.warn("No users loaded (file not found or error): {}", e.getMessage());
-            return new ConcurrentHashMap<>();
+            throw new FailedToLoadException("Failed to load users from " + USERS_FILE, e);
         }
     }
 
@@ -74,54 +91,60 @@ public class StorageManager {
      * Loads the map of emails from a JSON file.
      *
      * @return The map of emails
+     * @throws FailedToLoadException if the file cannot be read
      */
-    public static Map<String, Email> loadEmails() {
+    public static Map<String, Email> loadEmails() throws FailedToLoadException {
         try (FileReader reader = new FileReader(EMAILS_FILE)) {
             Type type = new TypeToken<Map<String, Email>>() {}.getType();
             Map<String, Email> emails = gson.fromJson(reader, type);
-            log.info("Emails loaded from '{}'", EMAILS_FILE);
-            return emails != null ? new ConcurrentHashMap<>(emails) : new ConcurrentHashMap<>();
+            if (emails == null||emails.isEmpty()) {
+                return new ConcurrentHashMap<>();
+            } else {
+                return new ConcurrentHashMap<>(emails);
+            }
         } catch (IOException e) {
-            log.warn("No emails loaded (file not found or error): {}", e.getMessage());
-            return new ConcurrentHashMap<>();
+            throw new FailedToLoadException("Failed to load emails from " + EMAILS_FILE, e);
         }
     }
 
     /**
      * Clears the data in the users file.
+     *
+     * @throws FailedToSaveException if the file cannot be written
      */
-    public static void clearUsers() {
+    public static void clearUsers() throws FailedToSaveException {
         try (FileWriter writer = new FileWriter(USERS_FILE)) {
             writer.write("{}");
-            log.info("User data cleared from '{}'", USERS_FILE);
         } catch (IOException e) {
-            log.error("Failed to clear users: {}", e.getMessage(), e);
+            throw new FailedToSaveException("Failed to clear users in " + USERS_FILE, e);
         }
     }
 
     /**
      * Clears the data in the emails file.
+     *
+     * @throws FailedToSaveException if the file cannot be cleared
      */
-    public static void clearEmails() {
+    public static void clearEmails() throws FailedToSaveException {
         try (FileWriter writer = new FileWriter(EMAILS_FILE)) {
             writer.write("{}");
-            log.info("Email data cleared from '{}'", EMAILS_FILE);
         } catch (IOException e) {
-            log.error("Failed to clear emails: {}", e.getMessage(), e);
+            throw new FailedToSaveException("Failed to clear emails in " + EMAILS_FILE, e);
         }
     }
 
     /**
      * Clears the data in the users and emails files.
+     *
+     * @throws FailedToSaveException if the files cannot be cleared
      */
-    public static void clearFiles() {
+    public static void clearFiles() throws FailedToSaveException {
         try (FileWriter userWriter = new FileWriter(USERS_FILE);
              FileWriter emailWriter = new FileWriter(EMAILS_FILE)) {
             userWriter.write("{}");
             emailWriter.write("{}");
-            log.info("All data cleared from '{}' and '{}'", USERS_FILE, EMAILS_FILE);
         } catch (IOException e) {
-            log.error("Failed to clear files: {}", e.getMessage(), e);
+            throw new FailedToSaveException("Failed to clear both files", e);
         }
     }
 }

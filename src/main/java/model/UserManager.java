@@ -90,4 +90,14 @@ public class UserManager implements UserManagerInterface {
             log.warn("Attempted to load null user data. Skipping.");
         }
     }
+
+    /**
+     * Gets the user map.  From the concurrent hash map.
+     *
+     * @return the user map
+     */
+    @Override
+    public Map<String, User> getUserMap() {
+        return users;
+    }
 }
