@@ -1,12 +1,12 @@
 package model;
 
-import exception.InvalidUserCredentialsException;
-import exception.InvalidUserDetailsException;
-import exception.UserAlreadyExistsException;
-import exception.UserNotFoundException;
+import exception.*;
 import lombok.extern.slf4j.Slf4j;
+import utils.SecurityUtils;
 import utils.validators.UserValidator;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,16 +33,38 @@ public class UserManager implements UserManagerInterface {
      * @throws UserAlreadyExistsException if the user already exists
      * @throws InvalidUserDetailsException if the user details are invalid
      */
-    public void registerUser(String firstName, String lastName, String email, String password) throws UserAlreadyExistsException {
+    public void registerUser(String firstName, String lastName, String email, String password)
+            throws UserAlreadyExistsException, InvalidUserDetailsException, PasswordEncryptionException {
+
         if (users.containsKey(email)) {
             throw new UserAlreadyExistsException(email);
         }
 
-        User user = new User(firstName, lastName, email, password);
-        UserValidator.validate(user); // Now cleaner
+        try {
+            // Create user with raw password for validation
+            User user = new User(firstName, lastName, email, password);
 
-        users.put(email, user);
-        log.info("User registered: {}", email);
+            // Validate while password is still there
+            UserValidator.validate(user);
+
+            // Hash the password after validation
+            String salt = SecurityUtils.generateSalt();
+            String hashedPassword = SecurityUtils.hashPassword(password, salt);
+
+            // Store secure credentials
+            user.setSalt(salt);
+            user.setHashedPassword(hashedPassword);
+
+            // Clear the raw password
+            user.setPassword(null);
+
+            users.put(email, user);
+            log.info("User registered: {}", email);
+
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            log.error("Error hashing password for {}: {}", email, e.getMessage());
+            throw new PasswordEncryptionException("Error while hashing password during registration", e);
+        }
     }
 
 
@@ -54,21 +76,24 @@ public class UserManager implements UserManagerInterface {
      * @throws InvalidUserCredentialsException if the password is invalid
      * @throws UserNotFoundException if the user is not found
      */
-    public void loginUser(String email, String password) throws InvalidUserCredentialsException, UserNotFoundException {
-
+    public void loginUser(String email, String password) throws InvalidUserCredentialsException, UserNotFoundException, PasswordEncryptionException {
         User user = users.get(email);
-
-        if(user == null) {
-            log.error("User not found: {}", email);
+        if (user == null) {
+            log.warn("User not found: {}", email);
             throw new UserNotFoundException(email);
         }
 
-        if(!user.getPassword().equals(password)) {
-            log.warn("Invalid password for user: {}", email);
-            throw new InvalidUserCredentialsException(email);
+        try {
+            boolean isMatch = SecurityUtils.verifyPassword(password, user.getSalt(), user.getHashedPassword());
+            if (!isMatch) {
+                log.warn("Invalid password for user: {}", email);
+                throw new InvalidUserCredentialsException(email);
+            }
+            log.info("User logged in successfully: {}", email);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            log.error("Error verifying password for {}: {}", email, e.getMessage());
+            throw new PasswordEncryptionException("Error while authenticating using hash exception XP: ", e);
         }
-
-        log.info("User logged in successfully: {}", email);
     }
 
     /**
