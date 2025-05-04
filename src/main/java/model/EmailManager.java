@@ -206,4 +206,11 @@ public class EmailManager implements EmailManagerInterface {
             return "email-" + System.currentTimeMillis() + "-" + emails.size();
         }
     }
+
+    /**
+     * Clears all emails 
+     */
+    public static void clearEmailsForTest() {
+        emails.clear();
+    }
 }

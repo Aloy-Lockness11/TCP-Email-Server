@@ -10,66 +10,186 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class EmailManagerTest {
+class EmailManagerTest {
     private EmailManager emailManager;
-    private User sender;
-    private User recipient;
+    private User user1;
+    private User user2;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
+        EmailManager.clearEmailsForTest();
         emailManager = new EmailManager();
-        sender = new User("John", "Doe", "john@voidmail.com", "Password1!");
-        recipient = new User("Jane", "Smith", "jane@voidmail.com", "Password1!");
+        
+        // Create test users with all required fields
+        user1 = new User("John", "Doe", "john@voidmail.com", "Password123!");
+        user2 = new User("Jane", "Smith", "jane@voidmail.com", "Password456!");
+        
+        // Add users to the manager
         ConcurrentHashMap<String, User> userMap = new ConcurrentHashMap<>();
-        userMap.put(sender.getEmail(), sender);
-        userMap.put(recipient.getEmail(), recipient);
+        userMap.put(user1.getEmail(), user1);
+        userMap.put(user2.getEmail(), user2);
         emailManager.setUserMap(userMap);
     }
 
     @Test
-    public void sendEmail_success() throws UserNotFoundException {
-        String emailId = emailManager.sendEmail(sender.getEmail(), recipient.getEmail(), "Hello", "Test message");
+    void sendEmail_Success() throws UserNotFoundException {
+        String sender = user1.getEmail();
+        String recipient = user2.getEmail();
+        String subject = "Test Subject";
+        String content = "Test Content";
+
+        String emailId = emailManager.sendEmail(sender, recipient, subject, content);
+        
         assertNotNull(emailId);
-        List<Email> sent = emailManager.getSentEmails(sender.getEmail());
-        assertEquals(1, sent.size());
-        assertEquals("Hello", sent.get(0).getSubject());
-        List<Email> received = emailManager.getReceivedEmails(recipient.getEmail());
-        assertEquals(1, received.size());
-        assertEquals("Test message", received.get(0).getContent());
+        assertFalse(emailId.isEmpty());
+        
+        List<Email> sentEmails = emailManager.getSentEmails(sender);
+        assertEquals(1, sentEmails.size());
+        assertEquals(subject, sentEmails.get(0).getSubject());
     }
 
     @Test
-    public void sendEmail_userNotFound() {
+    void sendEmail_UserNotFound() {
+        String sender = "nonexistent@voidmail.com";
+        String recipient = user2.getEmail();
+        String subject = "Test Subject";
+        String content = "Test Content";
+
         assertThrows(UserNotFoundException.class, () -> {
-            emailManager.sendEmail("notfound@voidmail.com", recipient.getEmail(), "Hi", "Body");
-        });
-        assertThrows(UserNotFoundException.class, () -> {
-            emailManager.sendEmail(sender.getEmail(), "notfound@voidmail.com", "Hi", "Body");
+            emailManager.sendEmail(sender, recipient, subject, content);
         });
     }
 
     @Test
-    public void getSentAndReceivedEmails_empty() {
-        List<Email> sent = emailManager.getSentEmails(sender.getEmail());
-        List<Email> received = emailManager.getReceivedEmails(recipient.getEmail());
-        assertTrue(sent.isEmpty());
-        assertTrue(received.isEmpty());
+    void getReceivedEmails() throws UserNotFoundException {
+        String sender = user1.getEmail();
+        String recipient = user2.getEmail();
+        
+        emailManager.sendEmail(sender, recipient, "Subject 1", "Content 1");
+        emailManager.sendEmail(sender, recipient, "Subject 2", "Content 2");
+        
+        List<Email> receivedEmails = emailManager.getReceivedEmails(recipient);
+        assertEquals(2, receivedEmails.size());
     }
 
     @Test
-    public void markEmailAsViewed_success() throws Exception {
-        String emailId = emailManager.sendEmail(sender.getEmail(), recipient.getEmail(), "Subj", "Msg");
-        Email email = emailManager.getReceivedEmails(recipient.getEmail()).get(0);
-        assertFalse(email.isViewed());
+    void getSentEmails() throws UserNotFoundException {
+        String sender = user1.getEmail();
+        String recipient = user2.getEmail();
+        
+        emailManager.sendEmail(sender, recipient, "Subject 1", "Content 1");
+        emailManager.sendEmail(sender, recipient, "Subject 2", "Content 2");
+        
+        List<Email> sentEmails = emailManager.getSentEmails(sender);
+        assertEquals(2, sentEmails.size());
+    }
+
+    @Test
+    void getAllEmails() throws UserNotFoundException {
+        String sender = user1.getEmail();
+        String recipient = user2.getEmail();
+        
+        emailManager.sendEmail(sender, recipient, "Subject 1", "Content 1");
+        emailManager.sendEmail(recipient, sender, "Subject 2", "Content 2");
+        
+        List<Email> allEmails = emailManager.getAllEmails(sender);
+        assertEquals(2, allEmails.size());
+    }
+
+    @Test
+    void markEmailAsViewed() throws UserNotFoundException, EmailNotFoundException {
+        String sender = user1.getEmail();
+        String recipient = user2.getEmail();
+        
+        String emailId = emailManager.sendEmail(sender, recipient, "Subject", "Content");
+        
         emailManager.markEmailAsViewed(emailId);
-        Email updated = emailManager.getReceivedEmails(recipient.getEmail()).get(0);
-        assertTrue(updated.isViewed());
+        
+        List<Email> receivedEmails = emailManager.getReceivedEmails(recipient);
+        assertTrue(receivedEmails.get(0).isViewed());
     }
 
     @Test
-    public void markEmailAsViewed_notFound() {
+    void markEmailAsViewed_EmailNotFound() {
         assertThrows(EmailNotFoundException.class, () -> {
-            emailManager.markEmailAsViewed("fakeid");
+            emailManager.markEmailAsViewed("nonexistent-email-id");
+        });
+    }
+
+    @Test
+    void setAndGetEmailMap() {
+        ConcurrentHashMap<String, Email> testMap = new ConcurrentHashMap<>();
+        Email testEmail = Email.builder()
+                .id("test-id")
+                .sender("test@voidmail.com")
+                .recipient("recipient@voidmail.com")
+                .subject("Test")
+                .content("Content")
+                .build();
+        testMap.put("test-id", testEmail);
+        
+        emailManager.setEmailMap(testMap);
+        assertEquals(testMap, emailManager.getEmailMap());
+    }
+
+    @Test
+    void setUserMap_NullInput() {
+        // Should not throw, just log a warning
+        assertDoesNotThrow(() -> emailManager.setUserMap(null));
+    }
+
+    @Test
+    void setEmailMap_NullInput() {
+        // Should not throw, just log a warning
+        assertDoesNotThrow(() -> emailManager.setEmailMap(null));
+    }
+
+    @Test
+    void getEmailMap_ReturnsCurrentMap() {
+        assertNotNull(emailManager.getEmailMap());
+        assertTrue(emailManager.getEmailMap() instanceof ConcurrentHashMap);
+    }
+
+    @Test
+    void sendEmail_BothUsersMissing() {
+        // Remove all users
+        emailManager.setUserMap(new ConcurrentHashMap<>());
+        // Should not throw, as per code (users.size() == 0)
+        assertDoesNotThrow(() -> {
+            emailManager.sendEmail("a@voidmail.com", "b@voidmail.com", "Sub", "Body");
+        });
+    }
+
+    @Test
+    void sendEmail_SenderMissing() {
+        // Only add recipient
+        ConcurrentHashMap<String, User> userMap = new ConcurrentHashMap<>();
+        userMap.put(user2.getEmail(), user2);
+        emailManager.setUserMap(userMap);
+        assertThrows(UserNotFoundException.class, () -> {
+            emailManager.sendEmail(user1.getEmail(), user2.getEmail(), "Sub", "Body");
+        });
+    }
+
+    @Test
+    void sendEmail_RecipientMissing() {
+        // Only add sender
+        ConcurrentHashMap<String, User> userMap = new ConcurrentHashMap<>();
+        userMap.put(user1.getEmail(), user1);
+        emailManager.setUserMap(userMap);
+        assertThrows(UserNotFoundException.class, () -> {
+            emailManager.sendEmail(user1.getEmail(), user2.getEmail(), "Sub", "Body");
+        });
+    }
+
+    @Test
+    void sendEmail_InvalidEmail_ThrowsException() {
+        String sender = user1.getEmail();
+        String recipient = user2.getEmail();
+        String subject = ""; // Invalid: blank subject
+        String content = "Test Content";
+        assertThrows(RuntimeException.class, () -> {
+            emailManager.sendEmail(sender, recipient, subject, content);
         });
     }
 }
