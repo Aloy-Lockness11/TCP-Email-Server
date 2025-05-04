@@ -8,7 +8,7 @@
     </appender>
 
     <appender name="EMAIL_LOG" class="ch.qos.logback.core.FileAppender">
-        <file>resources/logs/email.log</file>
+        <file>logs/email.log</file>
         <append>true</append>
         <encoder>
             <pattern>%date %-5level [%thread] %logger{36} - %msg%n</pattern>
