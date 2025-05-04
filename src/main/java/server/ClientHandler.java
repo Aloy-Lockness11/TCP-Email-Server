@@ -8,6 +8,7 @@ import model.UserManagerInterface;
 import utils.TCPUtils;
 
 import java.net.Socket;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import utils.protocols.UserProtocol;
@@ -234,6 +235,71 @@ public class ClientHandler implements Runnable {
             return EmailProtocol.MARK_AS_VIEWED + CommonProtocol.SEP + EmailProtocol.SUCCESS;
         } catch (Exception e) {
             return EmailProtocol.MARK_AS_VIEWED + CommonProtocol.SEP + EmailProtocol.FAILURE + CommonProtocol.SEP + e.getMessage();
+        }
+    }
+
+    /**
+     * Handles the SEARCH_RECEIVED and SEARCH_SENT commands.
+     * It searches for emails based on a query string.
+     *
+     * @param parts The parts of the request string.
+     * @param isSent Indicates whether to search in sent emails (true) or received emails (false).
+     * @return The response string indicating the result of the email search.
+     */
+    private String handleSearchEmails(String[] parts, boolean isSent) {
+        // Format: SEARCH_RECEIVED##userEmail##query or SEARCH_SENT##userEmail##query
+        if (parts.length != 3) return (isSent ? EmailProtocol.SEARCH_SENT : EmailProtocol.SEARCH_RECEIVED) + CommonProtocol.SEP + EmailProtocol.INVALID_FORMAT;
+        String userEmail = parts[1];
+        String query = parts[2].toLowerCase();
+        try {
+            List<Email> emails = isSent ? emailManager.getSentEmails(userEmail) : emailManager.getReceivedEmails(userEmail);
+            StringBuilder response = new StringBuilder((isSent ? EmailProtocol.SEARCH_SENT : EmailProtocol.SEARCH_RECEIVED) + CommonProtocol.SEP + EmailProtocol.SUCCESS);
+            boolean found = false;
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            for (Email email : emails) {
+                String formattedDate = "";
+                try {
+                    formattedDate = email.getTimestamp().format(formatter);
+                } catch (Exception ignored) {}
+                boolean match = email.getSubject().toLowerCase().contains(query)
+                        || email.getSender().toLowerCase().contains(query)
+                        || email.getRecipient().toLowerCase().contains(query)
+                        || formattedDate.contains(query);
+                if (match) {
+                    found = true;
+                    if (isSent) {
+                        // ID, recipient, subject, timestamp, viewed
+                        response.append(CommonProtocol.SEP)
+                                .append(email.getId())
+                                .append(CommonProtocol.SEP)
+                                .append(email.getRecipient())
+                                .append(CommonProtocol.SEP)
+                                .append(email.getSubject())
+                                .append(CommonProtocol.SEP)
+                                .append(email.getTimestamp())
+                                .append(CommonProtocol.SEP)
+                                .append(email.isViewed());
+                    } else {
+                        // ID, sender, subject, timestamp, viewed
+                        response.append(CommonProtocol.SEP)
+                                .append(email.getId())
+                                .append(CommonProtocol.SEP)
+                                .append(email.getSender())
+                                .append(CommonProtocol.SEP)
+                                .append(email.getSubject())
+                                .append(CommonProtocol.SEP)
+                                .append(email.getTimestamp())
+                                .append(CommonProtocol.SEP)
+                                .append(email.isViewed());
+                    }
+                }
+            }
+            if (!found) {
+                response.append(CommonProtocol.SEP).append(EmailProtocol.NO_EMAILS);
+            }
+            return response.toString();
+        } catch (Exception e) {
+            return (isSent ? EmailProtocol.SEARCH_SENT : EmailProtocol.SEARCH_RECEIVED) + CommonProtocol.SEP + EmailProtocol.FAILURE + CommonProtocol.SEP + e.getMessage();
         }
     }
 }
