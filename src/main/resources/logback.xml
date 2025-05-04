@@ -23,22 +23,18 @@
         </encoder>
     </appender>
 
-    <!-- Logger for user-related classes -->
     <logger name="model.UserManager" level="DEBUG" additivity="false">
         <appender-ref ref="USER_LOG" />
     </logger>
 
-    <!-- Logger for email-related classes -->
     <logger name="model.EmailManager" level="DEBUG" additivity="false">
         <appender-ref ref="EMAIL_LOG" />
     </logger>
 
-    <!-- Logger for server-related classes -->
     <logger name="server.TCPServer" level="DEBUG" additivity="false">
         <appender-ref ref="SERVER_LOG" />
     </logger>
 
-    <!-- Root logger for fallback -->
     <root level="INFO">
         <appender-ref ref="SERVER_LOG" />
     </root>
