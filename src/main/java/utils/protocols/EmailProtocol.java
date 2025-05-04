@@ -2,10 +2,13 @@ package utils.protocols;
 
 public class EmailProtocol {
     // REQUEST CODES
-    public static final String SEND = "SEND";
     public static final String LIST_INBOX = "LIST_INBOX";
     public static final String LIST_SENT = "LIST_SENT";
     public static final String READ = "READ";
+    public static final String MARK_AS_VIEWED = "MARKASVIEWED";
+    public static final String INBOX = "INBOX";
+    public static final String SEND = "SEND";
+    public static final String SENT = "SENT";
 
     // RESPONSE CODES
     public static final String SEND_EMAIL = "SENDEMAIL";
