@@ -1,6 +1,7 @@
 package server;
 
 import exception.FailedToLoadException;
+import exception.FailedToSaveException;
 import lombok.extern.slf4j.Slf4j;
 import model.EmailManager;
 import model.EmailManagerInterface;
@@ -98,28 +99,15 @@ public class TCPServer {
             System.out.println("-----------------------------------");
             switch (choice) {
                 case "1":
-                    try{
-                        // Load data from storage into memory
-                        userManager.setUserMap(new ConcurrentHashMap<>(StorageManager.loadUsers()));
-                        emailManager.setEmailMap(new ConcurrentHashMap<>(StorageManager.loadEmails()));
-                        log.info("Data loaded from storage on startup.");
-                    } catch (FailedToLoadException e) {
-                        System.out.println("Failed to load data: " + e.getMessage());
-                        log.error("Failed to load data on startup", e);
-                    }
+                    //load before starting the server
+                    loadAllUsersAndEmails();
                     startServer();
 
                     break;
                 case "2":
                     serverRunning = false;
-                    try {
-                        StorageManager.saveUsersAndEmails(userManager.getUserMap(), emailManager.getEmailMap());
-                        System.out.println("Data saved");
-                        log.info("Data saved");
-                    } catch (Exception e) {
-                        System.out.println("Failed to save data before shutdown: " + e.getMessage());
-                        log.error("Failed to save data on shutdown: ", e);
-                    }
+                    // Stop the server and save data
+                    saveAllUsersAndEmails();
                     System.out.println("Server Stopped");
                     log.info("Server Stopped");
                     break;
@@ -152,41 +140,126 @@ public class TCPServer {
             String choice = sc.nextLine();
 
             System.out.println("-----------------------------------");
-            try {
-                switch (choice) {
-                    case "1":
+            switch (choice) {
+                case "1":
+                    try {
                         StorageManager.clearUsers();
                         System.out.println("User data cleared.");
-                        break;
-                    case "2":
+                    } catch (FailedToSaveException e) {
+                        System.out.println("Failed to clear user data: " + e.getMessage());
+                        log.error("Failed to clear users", e);
+                    } catch (Exception e) {
+                        System.out.println("Unexpected error while clearing users: " + e.getMessage());
+                        log.error("Unexpected error clearing users", e);
+                    }
+                    break;
+
+                case "2":
+                    try {
                         StorageManager.clearEmails();
                         System.out.println("Email data cleared.");
-                        break;
-                    case "3":
+                    } catch (FailedToSaveException e) {
+                        System.out.println("Failed to clear email data: " + e.getMessage());
+                        log.error("Failed to clear emails", e);
+                    } catch (Exception e) {
+                        System.out.println("Unexpected error while clearing emails: " + e.getMessage());
+                        log.error("Unexpected error clearing emails", e);
+                    }
+                    break;
+
+                case "3":
+                    try {
                         StorageManager.clearFiles();
                         System.out.println("All data files cleared.");
-                        break;
-                    case "4":
-                        userManager.setUserMap(new ConcurrentHashMap<>(StorageManager.loadUsers()));
-                        emailManager.setEmailMap(new ConcurrentHashMap<>(StorageManager.loadEmails()));
-                        System.out.println("Data loaded into memory.");
-                        break;
-                    case "5":
+                    } catch (FailedToSaveException e) {
+                        System.out.println("Failed to clear data files: " + e.getMessage());
+                        log.error("Failed to clear all data files", e);
+                    } catch (Exception e) {
+                        System.out.println("Unexpected error while clearing files: " + e.getMessage());
+                        log.error("Unexpected error clearing all files", e);
+                    }
+                    break;
+
+                case "4":
+                    loadAllUsersAndEmails();
+                    break;
+
+                case "5":
+                    saveAllUsersAndEmails();
+                    break;
+
+                case "6":
+                    try {
                         StorageManager.saveUsers(userManager.getUserMap());
+                        System.out.println("Users saved to file.");
+                    } catch (FailedToSaveException e) {
+                        System.out.println("Failed to save users: " + e.getMessage());
+                        log.error("Failed to save users", e);
+                    } catch (Exception e) {
+                        System.out.println("Unexpected error while saving users: " + e.getMessage());
+                        log.error("Unexpected error saving users", e);
+                    }
+                    break;
+
+                case "7":
+                    try {
                         StorageManager.saveEmails(emailManager.getEmailMap());
-                        System.out.println("Data saved to files.");
-                        break;
-                    case "6":
-                        inFileMenu = false;
-                        break;
-                    default:
-                        System.out.println("Invalid choice. Try again.");
-                }
-            } catch (Exception e) {
-                System.out.println("Error: " + e.getMessage());
-                log.error("File management operation failed", e);
+                        System.out.println("Emails saved to file.");
+                    } catch (FailedToSaveException e) {
+                        System.out.println("Failed to save emails: " + e.getMessage());
+                        log.error("Failed to save emails", e);
+                    } catch (Exception e) {
+                        System.out.println("Unexpected error while saving emails: " + e.getMessage());
+                        log.error("Unexpected error saving emails", e);
+                    }
+                    break;
+
+                case "8":
+                    inFileMenu = false;
+                    break;
+
+                default:
+                    System.out.println("Invalid choice. Try again.");
             }
+
             System.out.println("-----------------------------------");
+        }
+    }
+
+    /**
+     * This method loads all users and emails from the data files into memory.
+     * It uses the StorageManager to load the data and sets it in the UserManager and EmailManager.
+     * It's an extract method to keep the code clean and organized.
+     */
+    private static void loadAllUsersAndEmails() {
+        try {
+            userManager.setUserMap(new ConcurrentHashMap<>(StorageManager.loadUsers()));
+            emailManager.setEmailMap(new ConcurrentHashMap<>(StorageManager.loadEmails()));
+            System.out.println("Data loaded into memory.");
+        } catch (FailedToLoadException e) {
+            System.out.println("Failed to load data: " + e.getMessage());
+            log.error("Failed to load data from files", e);
+        } catch (Exception e) {
+            System.out.println("Unexpected error while loading data: " + e.getMessage());
+            log.error("Unexpected error loading data", e);
+        }
+    }
+
+    /**
+     * This method saves all users and emails to the data files.
+     * It uses the StorageManager to save the data from the UserManager and EmailManager.
+     * It's an extract method to keep the code clean and organized.
+     */
+    private static void saveAllUsersAndEmails() {
+        try {
+            StorageManager.saveUsersAndEmails(userManager.getUserMap(), emailManager.getEmailMap());
+            System.out.println("Data saved to files.");
+        } catch (FailedToSaveException e) {
+            System.out.println("Failed to save data: " + e.getMessage());
+            log.error("Failed to save data to files", e);
+        } catch (Exception e) {
+            System.out.println("Unexpected error while saving data: " + e.getMessage());
+            log.error("Unexpected error saving data", e);
         }
     }
 
@@ -212,6 +285,19 @@ public class TCPServer {
     }
 
     /**
+     * This method prints the main menu options for the user.
+     */
+    private static void mainMenuDisplay() {
+
+        System.out.println("=== TCP Server Main Menu ===");
+        System.out.println("1. Start Server");
+        System.out.println("2. Stop Server");
+        System.out.println("3. Exit Program");
+        System.out.println("4. File Management Options");
+
+    }
+
+    /**
      * This method prints the file management menu options for the user.
      */
     private static void fileManagementMenuDisplay() {
@@ -221,21 +307,10 @@ public class TCPServer {
         System.out.println("3. Clear Both Files");
         System.out.println("4. Load All Data");
         System.out.println("5. Save All Data");
-        System.out.println("6. Back to Main Menu");
+        System.out.println("6. Save Only Users");
+        System.out.println("7. Save Only Emails");
+        System.out.println("8. Back to Main Menu");
         System.out.print("Choose an option: ");
-    }
-
-    /**
-     * This method prints the menu options for the user.
-     */
-    private static void mainMenuDisplay() {
-
-        System.out.println("=== TCP Server Main Menu ===");
-        System.out.println("1. Start Server");
-        System.out.println("2. Stop Server");
-        System.out.println("3. Exit and Save");
-        System.out.println("4. File Management Options");
-
     }
 
 
