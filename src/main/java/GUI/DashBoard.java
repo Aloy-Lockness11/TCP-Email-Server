@@ -1,6 +1,7 @@
 package GUI;
 
 import client.ClientConnection;
+import exception.SecureConnectionException;
 import utils.protocols.CommonProtocol;
 import utils.protocols.EmailProtocol;
 
@@ -387,6 +388,8 @@ public class DashBoard extends JFrame {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error connecting to server: " + ex.getMessage());
             messageArea.setText("Error connecting to server: " + ex.getMessage());
+        } catch (SecureConnectionException e) {
+            JOptionPane.showMessageDialog(this, "Unable to establish a secure connection to the server.","Security Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -518,6 +521,8 @@ public class DashBoard extends JFrame {
             } catch (IOException ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Error connecting to server: " + ex.getMessage(), "Connection Error", JOptionPane.ERROR_MESSAGE);
+            } catch (SecureConnectionException ex) {
+                JOptionPane.showMessageDialog(this, "Unable to establish a secure connection to the server.","Security Error", JOptionPane.ERROR_MESSAGE);
             }
         });
         // Add Discard button next to Send
@@ -690,6 +695,8 @@ public class DashBoard extends JFrame {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error connecting to server: " + ex.getMessage());
             messageArea.setText("Error connecting to server: " + ex.getMessage());
+        } catch (SecureConnectionException e) {
+            JOptionPane.showMessageDialog(this, "Unable to establish a secure connection to the server.","Security Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

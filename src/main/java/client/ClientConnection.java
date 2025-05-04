@@ -1,30 +1,53 @@
 package client;
 
+import exception.SecureConnectionException;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.*;
-import java.net.Socket;
+import java.security.KeyStore;
 
 /**
  * ClientConnection class that provides methods to establish a connection to a server,
  * send messages, receive messages, and close the connection
  */
 public class ClientConnection {
-    private Socket socket;
+    private SSLSocket socket;
     private BufferedReader in;
     private PrintWriter out;
 
     /**
-     * Constructor to create a new ClientConnection instance.
-     * It initializes the socket, input stream, and output stream.
+     * Establishes a secure SSL connection to the server.
      *
-     * @param host The server's hostname or IP address
-     * @param port The server's port number
-     * @throws IOException If an I/O error occurs when creating the socket
+     * @param host The server host
+     * @param port The server port
+     * @throws Exception if an error occurs during connection
      */
-    public ClientConnection(String host, int port) throws IOException {
-        socket = new Socket(host, port);
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        out = new PrintWriter(socket.getOutputStream(), true);
+    public ClientConnection(String host, int port) throws SecureConnectionException{
+        try {
+            char[] password = "aloysirin".toCharArray(); // Replace as needed
+            KeyStore trustStore = KeyStore.getInstance("JKS");
+            trustStore.load(new FileInputStream("serverkeystore.jks"), password);
+
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+            tmf.init(trustStore);
+
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, tmf.getTrustManagers(), null);
+
+            SSLSocketFactory factory = sslContext.getSocketFactory();
+            socket = (SSLSocket) factory.createSocket(host, port);
+
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true);
+
+        } catch (Exception e) {
+            throw new SecureConnectionException("Failed to establish secure connection to server", e);
+        }
     }
+
 
     /**
      * Sends a message to the server.

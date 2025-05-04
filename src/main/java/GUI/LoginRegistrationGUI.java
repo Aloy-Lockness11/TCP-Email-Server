@@ -1,6 +1,7 @@
 package GUI;
 
 import client.ClientConnection;
+import exception.SecureConnectionException;
 import model.User;
 import utils.validators.UserValidator;
 import jakarta.validation.ConstraintViolation;

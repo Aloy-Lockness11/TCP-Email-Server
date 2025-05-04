@@ -9,10 +9,11 @@ import model.UserManager;
 import model.UserManagerInterface;
 import utils.StorageManager;
 
+import javax.net.ssl.*;
 import java.io.File;
+import java.io.FileInputStream;
 import java.net.Socket;
-import java.io.IOException;
-import java.net.ServerSocket;
+import java.security.KeyStore;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -50,37 +51,50 @@ public class TCPServer {
      * this allows the server to be started and stopped without blocking the main thread.
      */
     private static void startServer() {
-        // Check if the server is already running before starting a new one
         if (serverThread != null && serverThread.isAlive()) {
             System.out.println("Server is already running.");
             return;
         }
 
-        // Create a new thread for the server
         serverRunning = true;
         serverThread = new Thread(() -> {
-            try (ServerSocket serverSocket = new ServerSocket(port)) {
-                log.info("Server Started and Listening on port {}", port);
+            try {
+                // Load keystore
+                char[] password = "aloysirin".toCharArray(); // replace with your password
+                KeyStore keyStore = KeyStore.getInstance("JKS");
+                keyStore.load(new FileInputStream("serverkeystore.jks"), password);
 
-                while (serverRunning) {
-                    // Accept incoming client connections
-                    Socket clientSocket = serverSocket.accept();
-                    log.info("Client connected from {}", clientSocket.getInetAddress());
+                // Setup key manager
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+                kmf.init(keyStore, password);
 
-                    // Create a new thread to handle the client connection
-                    new Thread(new ClientHandler(clientSocket,userManager,emailManager)).start();
+                // Setup SSL context
+                SSLContext sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(kmf.getKeyManagers(), null, null);
+
+                SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
+
+                try (SSLServerSocket serverSocket = (SSLServerSocket) ssf.createServerSocket(port)) {
+                    System.out.println("Secure TCP Server Started Listening on port " + port);
+                    log.info("Secure server started on port {}", port);
+
+                    while (serverRunning) {
+                        Socket clientSocket = serverSocket.accept();
+                        log.info("Secure client connected from {}", clientSocket.getInetAddress());
+                        new Thread(new ClientHandler(clientSocket, userManager, emailManager)).start();
+                    }
                 }
-
-            } catch (IOException e) {
-                System.out.println("Error in server: " + e.getMessage());
-                log.error("Error in server: {}", e.getMessage(), e);
+            } catch (Exception e) {
+                System.out.println("Secure server error: " + e.getMessage());
+                log.error("Secure server error: {}", e.getMessage(), e);
             }
         });
 
         serverThread.start();
-        System.out.println("Server is running...");
-        log.info("Server Started");
+        System.out.println("Server is running securely over SSL...");
     }
+
+
 
     /**
      * This method handles the main menu options for the user
