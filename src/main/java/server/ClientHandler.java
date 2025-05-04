@@ -8,8 +8,8 @@ import model.UserManagerInterface;
 import utils.TCPUtils;
 
 import java.net.Socket;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.time.format.DateTimeFormatter;
 
 import utils.protocols.UserProtocol;
 import utils.protocols.EmailProtocol;
@@ -70,6 +70,8 @@ public class ClientHandler implements Runnable {
             case EmailProtocol.LIST_INBOX -> handleListEmails(parts, false);
             case EmailProtocol.LIST_SENT -> handleListEmails(parts, true);
             case EmailProtocol.MARK_AS_VIEWED -> handleMarkAsViewed(parts);
+            case EmailProtocol.SEARCH_RECEIVED -> handleSearchEmails(parts, false);
+            case EmailProtocol.SEARCH_SENT -> handleSearchEmails(parts, true);
             default -> EmailProtocol.UNKNOWN_COMMAND;
         };
     }
