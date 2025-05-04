@@ -1,41 +1,55 @@
 <configuration>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- USER LOG -->
     <appender name="USER_LOG" class="ch.qos.logback.core.FileAppender">
         <file>logs/user.log</file>
         <append>true</append>
         <encoder>
-            <pattern>%date %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
+    <!-- EMAIL LOG -->
     <appender name="EMAIL_LOG" class="ch.qos.logback.core.FileAppender">
         <file>logs/email.log</file>
         <append>true</append>
         <encoder>
-            <pattern>%date %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
+    <!-- SERVER LOG -->
     <appender name="SERVER_LOG" class="ch.qos.logback.core.FileAppender">
         <file>logs/server.log</file>
         <append>true</append>
         <encoder>
-            <pattern>%date %-5level [%thread] %logger{36} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
+    <!-- Logger Routing -->
     <logger name="model.UserManager" level="DEBUG" additivity="false">
-        <appender-ref ref="USER_LOG" />
+        <appender-ref ref="USER_LOG"/>
     </logger>
 
     <logger name="model.EmailManager" level="DEBUG" additivity="false">
-        <appender-ref ref="EMAIL_LOG" />
+        <appender-ref ref="EMAIL_LOG"/>
     </logger>
 
     <logger name="server.TCPServer" level="DEBUG" additivity="false">
-        <appender-ref ref="SERVER_LOG" />
+        <appender-ref ref="SERVER_LOG"/>
+        <appender-ref ref="CONSOLE"/> <!-- Also log server stuff to console -->
     </logger>
 
     <root level="INFO">
-        <appender-ref ref="SERVER_LOG" />
+        <appender-ref ref="CONSOLE"/>
     </root>
 </configuration>
