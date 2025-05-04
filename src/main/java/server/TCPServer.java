@@ -12,6 +12,8 @@ import utils.StorageManager;
 import javax.net.ssl.*;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.Socket;
 import java.security.KeyStore;
 import java.util.Scanner;
@@ -293,6 +295,37 @@ public class TCPServer {
             } else {
                 log.debug("Directory already exists: {}", dir);
             }
+        }
+
+        // Create JSON files if they don't exist
+        createFileIfMissing("data/user.json");
+        createFileIfMissing("data/email.json");
+    }
+
+    /**
+     * This method creates a file if it does not exist.
+     * It initializes the file with an empty JSON object or array based on the file name.
+     *
+     * @param path The path of the file to create
+     */
+    private static void createFileIfMissing(String path) {
+        File file = new File(path);
+        if (!file.exists()) {
+            try {
+                boolean created = file.createNewFile();
+                if (created) {
+                    try (FileWriter writer = new FileWriter(file)) {
+                        writer.write("{}");
+                    }
+                    log.info("Created and initialized file: {}", path);
+                } else {
+                    log.warn("Failed to create file: {}", path);
+                }
+            } catch (IOException e) {
+                log.error("Error creating file {}: {}", path, e.getMessage());
+            }
+        } else {
+            log.debug("File already exists: {}", path);
         }
     }
 

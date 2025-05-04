@@ -322,7 +322,7 @@ public class DashBoard extends JFrame {
     private void markEmailAsViewed(String emailId) {
         // Send MARKASVIEWED to server
         try {
-            ClientConnection connection = new ClientConnection("localhost", 12345);
+            ClientConnection connection = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
             connection.send(EmailProtocol.MARK_AS_VIEWED + CommonProtocol.SEP + emailId);
             connection.receive();
             connection.close();
@@ -340,7 +340,7 @@ public class DashBoard extends JFrame {
                 userEmail = userEmail + "@voidmail.com";
             }
 
-            ClientConnection connection = new ClientConnection("localhost", 12345);
+            ClientConnection connection = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
             connection.send(EmailProtocol.GET_EMAILS + CommonProtocol.SEP + userEmail + CommonProtocol.SEP + (isSent ? "SENT" : "INBOX"));
             String response = connection.receive();
             connection.close();
@@ -500,7 +500,7 @@ public class DashBoard extends JFrame {
                 sender = sender + "@voidmail.com";
             }
             try {
-                ClientConnection connection = new ClientConnection("localhost", 12345);
+                ClientConnection connection = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
                 connection.send(EmailProtocol.SEND_EMAIL + CommonProtocol.SEP +
                         sender + CommonProtocol.SEP +
                         to + CommonProtocol.SEP +
@@ -559,7 +559,7 @@ public class DashBoard extends JFrame {
                 userEmail = userEmail + "@voidmail.com";
             }
             // Count inbox
-            ClientConnection connectionInbox = new ClientConnection("localhost", 12345);
+            ClientConnection connectionInbox = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
             connectionInbox.send(EmailProtocol.GET_EMAILS + CommonProtocol.SEP + userEmail + CommonProtocol.SEP + "INBOX");
             String responseInbox = connectionInbox.receive();
             connectionInbox.close();
@@ -572,7 +572,7 @@ public class DashBoard extends JFrame {
                 }
             }
             // Count sent
-            ClientConnection connectionSent = new ClientConnection("localhost", 12345);
+            ClientConnection connectionSent = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
             connectionSent.send(EmailProtocol.GET_EMAILS + CommonProtocol.SEP + userEmail + CommonProtocol.SEP + "SENT");
             String responseSent = connectionSent.receive();
             connectionSent.close();
@@ -630,13 +630,13 @@ public class DashBoard extends JFrame {
             }
             // Search Inbox (received)
             String commandInbox = EmailProtocol.SEARCH_RECEIVED;
-            ClientConnection connectionInbox = new ClientConnection("localhost", 12345);
+            ClientConnection connectionInbox = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
             connectionInbox.send(commandInbox + CommonProtocol.SEP + userEmail + CommonProtocol.SEP + query);
             String responseInbox = connectionInbox.receive();
             connectionInbox.close();
             // Search Sent
             String commandSent = EmailProtocol.SEARCH_SENT;
-            ClientConnection connectionSent = new ClientConnection("localhost", 12345);
+            ClientConnection connectionSent = new ClientConnection(CommonProtocol.HOSTNAME, CommonProtocol.PORT);
             connectionSent.send(commandSent + CommonProtocol.SEP + userEmail + CommonProtocol.SEP + query);
             String responseSent = connectionSent.receive();
             connectionSent.close();
